@@ -69,7 +69,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                         "w-full rounded-xl",
                         highlighted
                             ? "bg-indigo-600 hover:bg-indigo-500 text-white"
-                            : "bg-primary/45 hover:bg-primary/60 border border-white/10 text-white"
+                            : "bg-surface-selected hover:bg-surface-hover border border-border text-foreground"
                     )}
                 >
                     {buttonLabel}

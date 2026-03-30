@@ -21,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={atkinson.variable}>
-      <body className={`${atkinson.className} relative antialiased bg-background w-screen h-screen flex flex-col`}>
+    <html lang="en" className={`${atkinson.variable} dark`}>
+      <body className={`${atkinson.className} relative antialiased bg-background text-foreground w-screen h-screen flex flex-col`}>
         <QueryProvider>
           <TooltipProvider>
             {children}

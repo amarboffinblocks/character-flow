@@ -100,7 +100,7 @@ function Calendar({
         ),
         range_end: "day-range-end",
         selected: cn(
-          "bg-primary text-white hover:bg-primary/90 hover:text-white focus:bg-primary focus:text-white shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]",
+          "bg-primary text-primary-foreground hover:bg-accent-hover hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
           defaultClassNames.selected
         ),
         today: cn(

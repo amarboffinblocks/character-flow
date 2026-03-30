@@ -82,8 +82,8 @@ const FormImageUpload: React.FC<FormImageUploadProps> = ({
         <div className="text-center space-y-2">
             <label
                 className={cn(
-                    "cursor-pointer relative rounded-full w-30 h-30 overflow-hidden flex flex-col items-center justify-center border border-primary bg-primary/30 backdrop-blur-3xl p-2 hover:bg-primary/40",
-                    meta.touched && meta.error && "border-destructive bg-red-500/20",
+                    "group cursor-pointer relative rounded-full w-30 h-30 overflow-hidden flex flex-col items-center justify-center border border-border bg-surface-subtle p-2 transition-colors hover:bg-surface-hover hover:border-border focus-within:ring-2 focus-within:ring-focus-ring focus-within:border-focus-ring",
+                    meta.touched && meta.error && "border-destructive ring-2 ring-destructive focus-within:ring-destructive",
                     className
                 )}
             >
@@ -98,7 +98,10 @@ const FormImageUpload: React.FC<FormImageUploadProps> = ({
                     </div>
                 ) : (
                     <CloudUpload
-                        className={cn("text-primary size-12", meta.touched && meta.error && "text-destructive")}
+                        className={cn(
+                            "size-12 text-muted-foreground transition-colors group-hover:text-foreground",
+                            meta.touched && meta.error && "text-destructive group-hover:text-destructive"
+                        )}
                     />
                 )}
                 <input

@@ -38,7 +38,6 @@ const FormCheckbox: React.FC<FormCheckboxProps> = ({
 
   // Handle checkbox change without triggering form-wide validation
   const handleCheckedChange = React.useCallback((checked: boolean | "indeterminate") => {
-    console.log(checked)
     // Update value without triggering validation (shouldValidate: false)
     // Only mark this field as touched, not the entire form
     setValue(Boolean(checked), false);
@@ -54,8 +53,7 @@ const FormCheckbox: React.FC<FormCheckboxProps> = ({
         checked={!!value}
         disabled={disabled}
         onCheckedChange={handleCheckedChange}
-        className="bg-primary/30 backdrop-blur-sm border-primary/80 font-bold cursor-pointer 
-                   data-[state=checked]:text-white text-primary rounded-lg size-8"
+        className="size-8 cursor-pointer rounded-lg font-medium"
         {...props}
       />
       {label && (

@@ -310,7 +310,7 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
           <Button
             onClick={handleImport}
             disabled={selectedFiles.length === 0 || isLoading}
-            className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="rounded-full bg-primary hover:bg-accent-hover text-primary-foreground"
           >
             {isLoading ? (
               <>

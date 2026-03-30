@@ -259,7 +259,9 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = (props) => {
                 maxCount={maxCount}
                 singleLine={singleLine}
                 deduplicateOptions={true}
-                className={cn(meta.touched && meta.error && "border-red-500 bg-red-500/20")}
+                className={cn(
+                    meta.touched && meta.error && "border-destructive ring-2 ring-destructive"
+                )}
                 disabled={isLoadingTags || isCreatingTag}
                 resetOnDefaultValueChange={true}
                 emptyIndicator={

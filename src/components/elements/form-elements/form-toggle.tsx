@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useField } from "formik";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 import { FieldRules } from "@/types/form-types";
 
 interface FormToggleProps {
@@ -41,16 +42,22 @@ const FormToggle: React.FC<FormToggleProps> = ({
             type="single"
             value={value || initialValue}
             onValueChange={handleChange}
-            className={`flex gap-2 bg-primary/40 backdrop-blur-3xl px-2 py-1 rounded-full border border-primary/80 ${className}`}
+            className={cn(
+                "flex h-9 w-full max-w-full gap-0.5 rounded-full border border-border bg-surface-subtle p-0.5",
+                className
+            )}
         >
-            {options.map(({ label, value }) => (
+            {options.map(({ label, value: optValue }) => (
                 <ToggleGroupItem
-                    key={value}
-                    value={value}
-                    className={`flex-1 !rounded-full hover:bg-primary/30 text-white h-7 px-4 !text-sm cursor-pointer font-medium transition-all ${(field.value || initialValue) === value
-                        ? "bg-primary"
-                        : "bg-transparent"
-                        }`}
+                    key={optValue}
+                    value={optValue}
+                    className={cn(
+                        "h-8 min-w-0 flex-1 !rounded-full border-0 !shadow-none px-3 text-sm font-medium",
+                        "text-muted-foreground transition-colors",
+                        "hover:bg-surface-hover hover:text-foreground",
+                        "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary data-[state=on]:hover:text-primary-foreground",
+                        "focus-visible:z-10"
+                    )}
                 >
                     {label}
                 </ToggleGroupItem>

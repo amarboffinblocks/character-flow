@@ -6,7 +6,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuPortal,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -27,8 +29,6 @@ import { Checkbox } from "../ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Background } from "@/lib/api/backgrounds";
-import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
-import { useUpdateBackground } from "@/hooks/background/use-update-background";
 
 interface BackgroundCardProps {
   background: Background;
@@ -52,13 +52,8 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
   className = "",
   ...props
 }) => {
-  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
-  const [linkDialogModel, setLinkDialogModel] = useState<LinkEntityModel>("character");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const { updateBackgroundAsync } = useUpdateBackground(background.id, {
-    showToasts: true,
-  });
 
   const imageUrl =
     typeof background.image === "object" && background.image?.url
@@ -70,22 +65,6 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
   const handleCheckboxChange = (checked: boolean) => {
     onSelectChange?.(background.id, checked);
   };
-  const openLinkDialog = (model: LinkEntityModel) => {
-    setLinkDialogModel(model);
-    setIsLinkDialogOpen(true);
-  };
-
-  const handleLinkConfirm = async (selectedIds: string[]) => {
-    const id = selectedIds[0];
-    if (!id) return;
-
-    await updateBackgroundAsync({
-      characterId: linkDialogModel === "character" ? id : null,
-      personaId: linkDialogModel === "persona" ? id : null,
-      lorebookId: linkDialogModel === "lorebook" ? id : null,
-      realmId: linkDialogModel === "realm" ? id : null,
-    });
-  };
 
   const displayName = background.name || "Background";
 
@@ -94,9 +73,9 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
       <div
         {...props}
         className={cn(
-          "relative rounded-3xl border overflow-hidden group aspect-video",
-          "bg-primary/20 backdrop-blur-xl border-white/10",
-          "hover:border-primary/50 hover:bg-primary/25 hover:shadow-lg hover:shadow-primary/10",
+          "relative rounded-2xl border overflow-hidden group aspect-video",
+          "bg-surface-base border-border",
+          "hover:border-focus-ring hover:bg-surface-hover hover:shadow-md",
           "transition-all duration-300 ease-out",
           className
         )}
@@ -105,7 +84,7 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
         <div className="absolute inset-0">
           {/* Skeleton while loading */}
           {!imageLoaded && imageUrl && (
-            <Skeleton className="absolute inset-0 rounded-none bg-linear-to-br from-primary/30 via-primary/20 to-primary/10" />
+            <Skeleton className="absolute inset-0 rounded-none bg-surface-active" />
           )}
 
           {/* Background image */}
@@ -123,10 +102,10 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
             />
           ) : (
             <div
-              className="absolute inset-0 bg-primary/15 flex items-center justify-center"
+              className="absolute inset-0 bg-surface-active flex items-center justify-center"
               aria-hidden
             >
-              <span className="text-2xl font-semibold text-white/40">
+              <span className="text-2xl font-semibold text-muted-foreground">
                 {displayName.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -134,7 +113,7 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
 
           {/* Gradient overlay for better contrast */}
           <div
-            className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"
+            className="absolute inset-0 bg-linear-to-t from-surface-overlay via-transparent to-transparent"
             aria-hidden
           />
         </div>
@@ -146,16 +125,16 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
               id={`background-${background.id}`}
               checked={selected}
               onCheckedChange={handleCheckboxChange}
-              className="bg-black/40 border-primary/80 data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer data-[state=checked]:text-white text-white rounded-full size-6 backdrop-blur-sm"
+              className="bg-surface-selected border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer data-[state=checked]:text-primary-foreground text-foreground rounded-full size-6"
             />
             {background.isGlobalDefault && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/90 text-white border border-white/20 backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary text-primary-foreground border border-border">
                 <Globe className="size-2.5" />
                 Default
               </span>
             )}
             {(background.characterId || background.personaId || background.realmId) && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-600/90 text-white border border-white/20 backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface-selected text-foreground border border-border">
                 <FolderSymlink className="size-2.5" />
                 Linked
               </span>
@@ -167,14 +146,16 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
               <Button
                 size="icon"
                 variant="ghost"
-                className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
+                className="size-7 rounded-full bg-surface-selected hover:bg-surface-hover text-foreground transition-colors"
               >
                 <MoreVertical className="size-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-gray-900/95 backdrop-blur-xl border border-white/10 min-w-[250px]">
+            <DropdownMenuContent align="end" className="bg-popover border border-border min-w-[250px] p-1.5">
+              <DropdownMenuLabel className="px-2 py-1 text-xs text-muted-foreground">Background Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="hover:bg-gray-800 transition cursor-pointer"
+                className="cursor-pointer"
                 onClick={() =>
                   background.isGlobalDefault
                     ? onClearDefault?.(background.id)
@@ -186,41 +167,21 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
                   ? "Remove as Default"
                   : "Set as Default Global Background"}
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="hover:bg-gray-800 transition cursor-pointer">
-                  <FolderSymlink className="w-4 h-4 mr-4" /> Link to Entity...
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent className="bg-gray-900/95 backdrop-blur-xl border border-white/10">
-                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("character")}>
-                      Character
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("persona")}>
-                      Persona
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("lorebook")}>
-                      Lorebook
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("realm")}>
-                      Realm
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="hover:bg-gray-800 transition cursor-pointer">
+                <DropdownMenuSubTrigger className="cursor-pointer">
                   <Download className="w-4 h-4 mr-4 " /> Download
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
-                  <DropdownMenuSubContent className="bg-gray-900/95 backdrop-blur-xl border border-white/10">
+                  <DropdownMenuSubContent className="bg-popover border border-border p-1.5">
                     <DropdownMenuItem
-                      className="hover:bg-gray-800 transition cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => onDownload?.(background.id, "png")}
                     >
                       <ImageIcon className="w-4 h-4 mr-2" /> PNG
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="hover:bg-gray-800 transition cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => onDownload?.(background.id, "jpg")}
                     >
                       <ImageIcon className="w-4 h-4 mr-2" /> JPG
@@ -230,7 +191,7 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
               </DropdownMenuSub>
               <DropdownMenuItem
                 variant="destructive"
-                className="cursor-pointer hover:bg-destructive/20"
+                className="cursor-pointer"
                 onClick={() => setIsDeleteDialogOpen(true)}
               >
                 <Trash2 className="w-4 h-4 mr-2" /> Delete
@@ -247,32 +208,22 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
               "opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             )}
           >
-            <p className="text-sm font-medium text-white truncate drop-shadow-lg">
+            <p className="text-sm font-medium text-foreground truncate">
               {displayName}
             </p>
           </div>
         )}
       </div>
 
-      <LinkEntityDialog
-        open={isLinkDialogOpen}
-        onOpenChange={setIsLinkDialogOpen}
-        title={`Link to ${linkDialogModel.charAt(0).toUpperCase() + linkDialogModel.slice(1)}${linkDialogModel === "character" || linkDialogModel === "persona" ? "s" : ""}`}
-        description={`Select ${linkDialogModel === "character" || linkDialogModel === "persona" ? "one or more " + linkDialogModel + "s" : "a " + linkDialogModel} to link "${displayName}" to.`}
-        model={linkDialogModel}
-        multiSelect={false}
-        onConfirm={handleLinkConfirm}
-      />
-
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-primary/15 backdrop-blur-3xl border-primary/30 rounded-4xl p-0 gap-0 overflow-hidden shadow-xl shadow-primary/5 sm:max-w-md">
+        <AlertDialogContent className="bg-popover border-border rounded-3xl p-0 gap-0 overflow-hidden shadow-xl sm:max-w-md">
           <AlertDialogHeader className="px-6 pt-8 pb-6 text-center">
             <div className="flex justify-center mb-4">
-              <div className="flex size-14 items-center justify-center rounded-full bg-amber-500/20 border-2 border-amber-500/40">
-                <TriangleAlert className="size-7 text-amber-500" aria-hidden />
+              <div className="flex size-14 items-center justify-center rounded-full bg-surface-active border-2 border-border">
+                <TriangleAlert className="size-7 text-warning" aria-hidden />
               </div>
             </div>
-            <AlertDialogTitle className="text-xl font-semibold text-white text-center leading-tight">
+            <AlertDialogTitle className="text-xl font-semibold text-center leading-tight">
               Delete background?
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -280,7 +231,7 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
                 <p>
                   {background.name ? (
                     <>
-                      <span className="font-semibold text-white">&ldquo;{displayName}&rdquo;</span> will be permanently removed from your account.
+                      <span className="font-semibold text-foreground">&ldquo;{displayName}&rdquo;</span> will be permanently removed from your account.
                     </>
                   ) : (
                     <>This background will be permanently removed from your account.</>
@@ -292,8 +243,8 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="px-6 py-4 bg-primary/5 border-t border-primary/20 gap-3 justify-center flex-wrap">
-            <AlertDialogCancel className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-white flex-1 sm:flex-initial">
+          <AlertDialogFooter className="px-6 py-4 bg-surface-subtle border-t border-border gap-3 justify-center flex-wrap">
+            <AlertDialogCancel className="rounded-full border-border hover:bg-surface-hover hover:border-focus-ring text-foreground flex-1 sm:flex-initial">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -302,7 +253,7 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
                 onDelete?.(background.id);
                 setIsDeleteDialogOpen(false);
               }}
-              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 border-0 flex-1 sm:flex-initial"
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-danger border-0 flex-1 sm:flex-initial"
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete

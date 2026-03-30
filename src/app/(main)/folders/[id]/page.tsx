@@ -375,7 +375,7 @@ export default function FolderPage() {
               Cancel
             </Button>
             <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-accent-hover"
               onClick={handleConfirmRename}
               disabled={isUpdating}
             >
@@ -440,7 +440,7 @@ export default function FolderPage() {
               Cancel
             </Button>
             <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-accent-hover"
               onClick={handleConfirmSelectCharacter}
             >
               Continue

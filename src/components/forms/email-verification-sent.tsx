@@ -94,7 +94,7 @@ const EmailVerificationSent: React.FC<EmailVerificationSentProps> = ({ email }) 
                         <motion.div variants={itemVariants} className="w-full space-y-3 pt-2">
                             <Link href="/resend/verification-email" className="block w-full">
                                 <Button
-                                    className="w-full h-10 bg-primary hover:bg-primary/90 text-white font-medium"
+                                    className="w-full h-10 bg-primary hover:bg-accent-hover text-primary-foreground font-medium"
                                 >
                                     <Mail className="mr-2 h-4 w-4" />
                                     Resend Verification Email

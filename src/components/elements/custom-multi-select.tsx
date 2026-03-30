@@ -69,8 +69,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
     serverSideSearch = false,
 }) => {
     const [open, setOpen] = React.useState(false);
-    console.log("options", options)
-    console.log("defaultValue", defaultValue)
     const [internalValue, setInternalValue] = React.useState<string[]>(
         defaultValue || []
     );
@@ -147,8 +145,6 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                 setInternalValue(newValues);
             }
 
-            // Call onChange
-            console.log(newValues)
             onValueChange(newValues);
         },
         [
@@ -358,7 +354,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                     disabled={disabled}
                     onKeyDown={handleKeyDown}
                     className={cn(
-                        "flex p-1 rounded-xl border border-primary/90 min-h-10 h-auto items-center justify-between bg-primary/30 backdrop-blur-2xl hover:bg-primary/30 w-full",
+                        "flex h-auto min-h-10 w-full items-center justify-between rounded-lg border-border bg-surface-subtle p-1 text-foreground shadow-xs transition-[color,box-shadow,background-color,border-color] hover:bg-surface-hover [&_svg]:pointer-events-auto",
                         disabled && "opacity-50 cursor-not-allowed",
                         className
                     )}
@@ -377,10 +373,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                             className={cn(
                                                 "capitalize",
                                                 multiSelect ? [
-                                                    "m-1     py-0.5 px-2 rounded-full transition-all duration-300 ease-in-out",
-                                                    "border-foreground/10 text-foreground bg-card hover:bg-card/80",
-                                                    "bg-primary text-white/80 hover:bg-primary",
-                                                    "[&>svg]:pointer-events-auto flex items-center"]
+                                                    "m-1 flex items-center rounded-full border border-border bg-surface-subtle px-2 py-0.5 text-foreground transition-all duration-300 ease-in-out",
+                                                    "hover:bg-surface-hover",
+                                                    "[&>svg]:pointer-events-auto",
+                                                ]
                                                     : " px-2"
                                             )}
                                         >
@@ -411,7 +407,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                 {maxCount && selectedValues.length > maxCount && (
                                     <Badge
                                         className={cn(
-                                            "m-1 bg-yellow-500 hover:bg-yellow-500 text-foreground border-foreground/1",
+                                            "m-1 border-border bg-surface-subtle text-foreground hover:bg-surface-hover",
                                             "[&>svg]:pointer-events-auto"
                                         )}
                                     >
@@ -444,13 +440,13 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                                 }
                                             }}
                                             aria-label={`Clear all ${selectedValues.length} selected options`}
-                                            className="flex items-center justify-center h-4 w-4 mx-2 cursor-pointer text-muted-foreground hover:text-white outline-none     "
+                                            className="flex items-center justify-center h-4 w-4 mx-2 cursor-pointer rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus-ring"
                                         >
                                             <X className="h-4 w-4" />
                                         </div>
                                         <Separator
                                             orientation="vertical"
-                                            className="flex min-h-6 h-full bg-primary"
+                                            className="flex min-h-6 h-full bg-border"
                                         />
                                     </>
                                 )}
@@ -462,7 +458,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                         </div>
                     ) : (
                         <div className="flex items-center justify-between w-full mx-auto">
-                            <span className="text-sm text-muted mx-3">{placeholder}</span>
+                            <span className="mx-3 text-sm text-muted-foreground">{placeholder}</span>
                             <ChevronDown className="h-4 cursor-pointer text-muted-foreground mx-2" />
                         </div>
                     )}
@@ -474,8 +470,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                 aria-multiselectable="true"
                 aria-label="Available options"
                 className={cn(
-                    "w-auto p-0 bg-primary/30 backdrop-blur-sm rounded-2xl border-primary/80 min-w-[300px]",
-                    "max-h-[60vh] overflow-hidden"
+                    "w-auto min-w-[300px] max-h-[60vh] overflow-hidden rounded-2xl border border-border bg-popover p-0 shadow-xl",
                 )}
                 align="start"
                 onEscapeKeyDown={() => {
@@ -484,8 +479,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                 }}
             >
                 {searchable && (
-                    <div className="flex h-9 items-center gap-2 border-b border-primary pl-3 bg-primary/30">
-                        <Search className="size-4 shrink-0 opacity-50 text-white" />
+                    <div className="flex h-9 items-center gap-2 border-b border-border bg-popover px-3">
+                        <Search className="size-4 shrink-0 text-muted-foreground" />
                         <Input
                             ref={searchInputRef}
                             placeholder={searchPlaceholder}
@@ -500,7 +495,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                 }
                             }}
                             onKeyDown={handleSearchKeyDown}
-                            className=" flex-1 h-full border-0  backdrop-blur-none  !bg-translate px-0 pr-2 py-3 text-sm outline-none focus-visible:ring-0 focus-visible:ring-offset-0 w-full rounded-none !bg-transparent "
+                            className="h-full w-full flex-1 rounded-none border-0 bg-transparent px-0 py-3 text-sm text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                             aria-label="Search options"
                         />
                     </div>
@@ -512,7 +507,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
                                 <ToggleGroup
                                     type="single"
-                                    className="w-full h-8 !rounded-xl overflow-hidden  "
+                                    className="h-8 w-full overflow-hidden rounded-2xl"
                                     value={filterValue || "SFW"}
                                     onValueChange={(value) => {
                                         if (value && setFilterValue) {
@@ -523,7 +518,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                     <ToggleGroupItem
                                         value="SFW"
                                         aria-label="SFW"
-                                        className="w-1/2 bg-primary/30 cursor-pointer text-white data-[state=on]:bg-primary data-[state=on]:text-white hover:bg-primary/30 hover:text-white "
+                                        className="w-1/2 cursor-pointer border-0 bg-surface-subtle text-muted-foreground shadow-none data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-surface-hover hover:text-foreground"
                                     >
                                         SFW
                                     </ToggleGroupItem>
@@ -531,7 +526,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                     <ToggleGroupItem
                                         value="NSFW"
                                         aria-label="NSFW"
-                                        className="w-1/2 bg-primary/30 cursor-pointer text-white data-[state=on]:bg-primary data-[state=on]:text-white hover:bg-primary/30 hover:text-white "
+                                        className="w-1/2 cursor-pointer border-0 bg-surface-subtle text-muted-foreground shadow-none data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-surface-hover hover:text-foreground"
                                     >
                                         NSFW
                                     </ToggleGroupItem>
@@ -552,10 +547,10 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                         key={`skeleton-${index}`}
                                         className="flex gap-3 items-center my-1 px-2 py-1.5 rounded-xl"
                                     >
-                                        <Skeleton className="size-12 rounded-full bg-primary/30" />
+                                        <Skeleton className="size-12 rounded-full bg-muted" />
                                         <div className="flex flex-col flex-1 gap-2">
-                                            <Skeleton className="h-4 w-32 bg-primary/30" />
-                                            <Skeleton className="h-3 w-48 bg-primary/30" />
+                                            <Skeleton className="h-4 w-32 bg-muted" />
+                                            <Skeleton className="h-3 w-48 bg-muted" />
                                         </div>
                                     </div>
                                 ))}
@@ -594,12 +589,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                             }
                                         }}
                                         className={cn(
-                                            "relative  flex my-1 cursor-pointer select-none items-center rounded-xl px-2 py-1.5 text-sm outline-none group",
-                                            "hover:bg-accent/60 hover:text-accent-foreground",
-                                            // "focus:bg-accent focus:text-accent-foreground",
-                                            isSelected && "bg-accent",
+                                            "group relative my-1 flex cursor-pointer select-none items-center rounded-xl px-2 py-1.5 text-sm text-foreground outline-none",
+                                            "hover:bg-surface-hover",
+                                            isSelected && "bg-surface-selected",
                                             isDisabled && "cursor-not-allowed opacity-50",
-                                            isFocused && "ring-2 ring-ring ring-offset-1"
+                                            isFocused && "ring-2 ring-focus-ring ring-offset-1 ring-offset-background"
                                         )}
                                     >
                                         <div className="flex-1">
@@ -612,27 +606,27 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                         )}
                     </div>
                     {multiSelect && maxCount && (
-                        <div className="border-t border-primary px-2 py-1.5 text-xs text-white text-center sticky bottom-0 ">
+                        <div className="sticky bottom-0 border-t border-border bg-popover px-2 py-1.5 text-center text-xs text-muted-foreground">
                             {selectedValues.length} / {maxCount} selected
                         </div>
                     )}
                     {selectedValues.length > 0 && (
-                        <div className="border-t border-primary flex gap-1 items-center justify-between ">
+                        <div className="flex items-center justify-between gap-1 border-t border-border bg-popover">
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                className="flex-1 px-2 py-1.5 text-white text-sm hover:bg-accent outline-none rounded-none cursor-pointer"
+                                className="flex-1 cursor-pointer rounded-none px-2 py-1.5 text-sm text-foreground outline-none hover:bg-surface-hover"
                             >
                                 Clear
                             </button>
                             <Separator
                                 orientation="vertical"
-                                className="flex min-h-6 h-full bg-primary"
+                                className="flex min-h-6 h-full bg-border"
                             />
                             <button
                                 type="button"
                                 onClick={() => setOpen(false)}
-                                className="flex-1 px-2 py-1.5 text-sm text-white hover:bg-accent outline-none  rounded-none cursor-pointer"
+                                className="flex-1 cursor-pointer rounded-none px-2 py-1.5 text-sm text-foreground outline-none hover:bg-surface-hover"
                             >
                                 Close
                             </button>

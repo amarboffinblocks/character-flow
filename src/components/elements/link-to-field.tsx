@@ -168,16 +168,19 @@ const LinkToField: React.FC<LinkToFieldProps> = ({
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col flex-1 min-w-0">
-                            <p className="font-medium text-white truncate">{item.label}</p>
+                            <p className="font-medium text-foreground truncate">{item.label}</p>
                             {item.meta?.description && (
-                                <span className="text-xs text-gray-300 line-clamp-1">
+                                <span className="text-xs text-muted-foreground line-clamp-1">
                                     {item.meta.description}
                                 </span>
                             )}
                         </div>
                     </div>
                 )}
-                className={cn(hasError && "border-red-500 bg-red-500/20", className)}
+                className={cn(
+                    hasError && "border-destructive ring-2 ring-destructive",
+                    className
+                )}
             />
         </div>
     );

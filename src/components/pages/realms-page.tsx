@@ -1,364 +1,365 @@
-"use client"
-import React, { useState, useCallback, useMemo } from 'react'
-import { Menu } from 'lucide-react'
+"use client";
+
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import Link from "next/link";
+import { Menu, Plus } from "lucide-react";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuPortal,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from '../ui/button'
-import { PaginationComponent } from '../elements/pagination-element';
-import FolderCardSkeleton from '../cards-skeletons/folder-card-skeleton';
-import { MasonryGrid } from '../elements/masonry-grid'
-import Link from 'next/link'
-import SearchField from '../elements/search-field'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import DataNotFound from '../elements/data-not-found'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { PaginationComponent } from "@/components/elements/pagination-element";
+import FolderCardSkeleton from "@/components/cards-skeletons/folder-card-skeleton";
+import { MasonryGrid } from "@/components/elements/masonry-grid";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Container from "@/components/elements/container";
 import Footer from "@/components/layout/footer";
-import MultiSelectFilter from "../elements/multi-select-filter";
+import MultiSelectFilter from "@/components/elements/multi-select-filter";
+import SearchField from "@/components/elements/search-field";
+import { ToggleSwitch } from "@/components/elements/toggle-switch";
+import ErrorEmptyState from "@/components/elements/error-empty-state";
+import GlobalLoader from "@/components/elements/global-loader";
+import { useListRealms } from "@/hooks/realm";
+import RealmCard from "@/components/cards/realm-card";
 
-interface Character {
-    id: number;
-    name: string;
-    avatar?: string;
-    description: string;
-}
+const TABS = [
+  { label: "All", value: "all" },
+  { label: "Public", value: "public" },
+  { label: "Private", value: "private" },
+  { label: "Favourites", value: "favourite" },
+] as const;
 
-interface Folder {
-    id: number;
-    name: string;
-    tags: string[];
-    description: string;
-    characters: Character[];
-}
-
-export const RealmsPageItems: Folder[] = [
-    {
-        id: 1,
-        name: "AI Projects",
-        tags: ["AI", "ML", "NLP"],
-        description: "Contains AI project files, models, and datasets.",
-        characters: [
-            { id: 101, name: "ChatGPT", avatar: "https://github.com/shadcn.png", description: "Conversational AI model." },
-            { id: 102, name: "Gemma", avatar: "https://randomuser.me/api/portraits/women/68.jpg", description: "NLP specialist AI." },
-            { id: 103, name: "Gemma", avatar: "https://randomuser.me/api/portraits/women/68.jpg", description: "NLP specialist AI." },
-
-            { id: 104, name: "Gemma", avatar: "https://randomuser.me/api/portraits/women/68.jpg", description: "NLP specialist AI." },
-
-            { id: 105, name: "Gemma", avatar: "https://randomuser.me/api/portraits/women/68.jpg", description: "NLP specialist AI." },
-
-            { id: 106, name: "Gemma", avatar: "https://randomuser.me/api/portraits/women/68.jpg", description: "NLP specialist AI." },
-
-        ]
-    },
-    {
-        id: 2,
-        name: "Design Assets",
-        tags: ["UI", "UX", "Figma"],
-        description: "Wireframes, prototypes, icons, and design files.",
-        characters: [
-            { id: 201, name: "Alice", avatar: "https://randomuser.me/api/portraits/women/44.jpg", description: "Lead UI designer." },
-            { id: 202, name: "Bob", avatar: "https://randomuser.me/api/portraits/men/32.jpg", description: "UX designer." },
-            { id: 203, name: "Bob", avatar: "https://randomuser.me/api/portraits/men/32.jpg", description: "UX designer." },
-            { id: 204, name: "Bob", avatar: "https://randomuser.me/api/portraits/men/32.jpg", description: "UX designer." },
-        ]
-    },
-    {
-        id: 3,
-        name: "Marketing",
-        tags: ["Campaign", "Social", "Ads"],
-        description: "Marketing campaigns and social media assets.",
-        characters: [
-            { id: 301, name: "Eve", avatar: "https://randomuser.me/api/portraits/women/22.jpg", description: "Marketing strategist." },
-            { id: 302, name: "Eve", avatar: "https://randomuser.me/api/portraits/women/22.jpg", description: "Marketing strategist." },
-
-        ]
-    },
-    {
-        id: 4,
-        name: "Product Docs",
-        tags: ["Docs", "Specs", "Guides"],
-        description: "Technical documentation, guides, and manuals.",
-        characters: [
-            { id: 401, name: "John", avatar: "https://randomuser.me/api/portraits/men/10.jpg", description: "Technical writer." },
-            { id: 402, name: "Sara", avatar: "https://randomuser.me/api/portraits/women/12.jpg", description: "Docs reviewer." }
-        ]
-    },
-    {
-        id: 5,
-        name: "Research Papers",
-        tags: ["AI", "Data", "ML"],
-        description: "Collection of AI research papers and studies.",
-        characters: [
-            { id: 501, name: "Dr. Smith", avatar: "https://randomuser.me/api/portraits/men/45.jpg", description: "Lead researcher." }
-        ]
-    },
-    {
-        id: 6,
-        name: "Client Presentations",
-        tags: ["Slides", "Pitch", "Demo"],
-        description: "PowerPoint presentations for client meetings.",
-        characters: [
-            { id: 601, name: "Emma", avatar: "https://randomuser.me/api/portraits/women/55.jpg", description: "Presentation designer." }
-        ]
-    },
-    {
-        id: 7,
-        name: "Finance Reports",
-        tags: ["Budget", "Revenue", "Analytics"],
-        description: "Monthly and quarterly financial reports.",
-        characters: [
-            { id: 701, name: "Mark", avatar: "https://randomuser.me/api/portraits/men/65.jpg", description: "Finance analyst." }
-        ]
-    },
-    {
-        id: 8,
-        name: "HR Policies",
-        tags: ["Employee", "Policy", "Guidelines"],
-        description: "HR manuals, policies, and employee guides.",
-        characters: [
-            { id: 801, name: "Linda", avatar: "https://randomuser.me/api/portraits/women/33.jpg", description: "HR manager." }
-        ]
-    },
-    {
-        id: 9,
-        name: "Development",
-        tags: ["Code", "Repo", "Docs"],
-        description: "Source code repositories and dev documentation.",
-        characters: [
-            { id: 901, name: "Tom", avatar: "https://randomuser.me/api/portraits/men/20.jpg", description: "Frontend dev." },
-            { id: 902, name: "Jerry", avatar: "https://randomuser.me/api/portraits/men/21.jpg", description: "Backend dev." }
-        ]
-    },
-    {
-        id: 10,
-        name: "Product Feedback",
-        tags: ["Survey", "User", "Feedback"],
-        description: "User surveys and product feedback reports.",
-        characters: [
-            { id: 1001, name: "Nina", avatar: "https://randomuser.me/api/portraits/women/18.jpg", description: "Product researcher." }
-        ]
-    }
-];
-import { useListRealms } from '@/hooks/realm'
-import RealmCard from '../cards/realm-card'
+const SORT_OPTIONS = [
+  { label: "A - Z", sortBy: "name" as const, sortOrder: "asc" as const },
+  { label: "Z - A", sortBy: "name" as const, sortOrder: "desc" as const },
+  { label: "Oldest to Newest", sortBy: "createdAt" as const, sortOrder: "asc" as const },
+  { label: "Newest to Oldest", sortBy: "createdAt" as const, sortOrder: "desc" as const },
+] satisfies Array<{
+  label: string;
+  sortBy: "createdAt" | "updatedAt" | "name";
+  sortOrder: "asc" | "desc";
+}>;
 
 const RealmsPage = () => {
-    const [page, setPage] = useState(1)
-    const [favPage, setFavPage] = useState(1)
-    const [search, setSearch] = useState('')
-    const [includeTags, setIncludeTags] = useState<string[]>([])
-    const [excludeTags, setExcludeTags] = useState<string[]>([])
-    const [activeTab, setActiveTab] = useState("all")
+  const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [ratingFilter, setRatingFilter] = useState<"SFW" | "NSFW" | undefined>("SFW");
+  const [sortBy, setSortBy] = useState<"createdAt" | "updatedAt" | "name">("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isFilterChanging, setIsFilterChanging] = useState(false);
+  const [includeTags, setIncludeTags] = useState<string[]>([]);
+  const [excludeTags, setExcludeTags] = useState<string[]>([]);
 
-    const filters = useMemo(() => ({
-        page,
-        limit: 12,
-        search: search || undefined,
-        tags: includeTags.length > 0 ? includeTags : undefined,
-        excludeTags: excludeTags.length > 0 ? excludeTags : undefined
-    }), [page, search, includeTags, excludeTags])
+  const handleDebouncedSearch = useCallback((value: string) => {
+    setDebouncedSearch(value);
+    setPage(1);
+  }, []);
 
-    const favFilters = useMemo(() => ({
-        page: favPage,
-        limit: 12,
-        isFavourite: true,
-        search: search || undefined,
-        tags: includeTags.length > 0 ? includeTags : undefined,
-        excludeTags: excludeTags.length > 0 ? excludeTags : undefined
-    }), [favPage, search, includeTags, excludeTags])
+  const handleSort = useCallback(
+    (by: "createdAt" | "updatedAt" | "name", order: "asc" | "desc") => {
+      setIsFilterChanging(true);
+      setSortBy(by);
+      setSortOrder(order);
+      setPage(1);
+    },
+    []
+  );
 
-    const { data, isLoading } = useListRealms(filters)
-    const { data: favData, isLoading: isFavLoading } = useListRealms(favFilters)
+  const onTabChange = useCallback((value: string) => {
+    setIsFilterChanging(true);
+    setActiveTab(value);
+    setPage(1);
+  }, []);
 
-    const realms = data?.realms || []
-    const totalPages = data?.pagination?.totalPages || 1
-    const favRealms = favData?.realms || []
-    const favTotalPages = favData?.pagination?.totalPages || 1
+  const handleRatingChange = useCallback((value: string) => {
+    setIsFilterChanging(true);
+    setRatingFilter(value as "SFW" | "NSFW" | undefined);
+    setPage(1);
+  }, []);
 
-    return (
-        <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative">
-            {/* Fixed Header Section */}
-            <div className="flex-none p-4 pb-0 z-10 ">
-                <div className="max-w-3xl w-full mx-auto space-y-4">
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-x-4 w-full">
-                        <SearchField
-                            placeholder='Search for Realm, Character name, or description'
-                            onChange={(val) => setSearch(val)}
-                        />
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button className="rounded-full shrink-0">
-                                    Realm Menu <Menu className="ml-2 h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
+  const handleIncludeTagsChange = useCallback((tags: string[]) => {
+    setIsFilterChanging(true);
+    setIncludeTags(tags);
+    setPage(1);
+  }, []);
 
-                            <DropdownMenuContent className="w-72" align="end">
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem>Show Favorites Only</DropdownMenuItem>
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Set Default View</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem>Favourites</DropdownMenuItem>
-                                                <DropdownMenuItem>Private Realms only</DropdownMenuItem>
-                                                <DropdownMenuItem>Public Realms only</DropdownMenuItem>
-                                                <DropdownMenuItem>Private and Public Realms</DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Alphabetical Order</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem>A - Z</DropdownMenuItem>
-                                                <DropdownMenuItem>Z - A</DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
+  const handleExcludeTagsChange = useCallback((tags: string[]) => {
+    setIsFilterChanging(true);
+    setExcludeTags(tags);
+    setPage(1);
+  }, []);
 
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Date Order</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem>Oldest to Newest</DropdownMenuItem>
-                                                <DropdownMenuItem>Newest to Oldest</DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
+  const handlePageChange = useCallback((p: number) => {
+    setPage(p);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, []);
 
-                                    <Link href={"/realms/create"}>
-                                        <DropdownMenuItem>Create Realm</DropdownMenuItem>
-                                    </Link>
+  const filters = useMemo(() => {
+    const base: {
+      page: number;
+      limit: number;
+      sortBy: "createdAt" | "updatedAt" | "name";
+      sortOrder: "asc" | "desc";
+      rating?: "SFW" | "NSFW";
+      search?: string;
+      tags?: string[];
+      excludeTags?: string[];
+      visibility?: "public" | "private";
+      isFavourite?: boolean;
+    } = {
+      page,
+      limit: 12,
+      sortBy,
+      sortOrder,
+    };
 
+    if (ratingFilter) {
+      base.rating = ratingFilter;
+    }
+    if (debouncedSearch.trim()) {
+      base.search = debouncedSearch.trim();
+    }
+    if (includeTags.length > 0) {
+      base.tags = includeTags;
+    }
+    if (excludeTags.length > 0) {
+      base.excludeTags = excludeTags;
+    }
 
-                                    <DropdownMenuItem variant='destructive'>Delete Realm</DropdownMenuItem>
-                                </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+    switch (activeTab) {
+      case "public":
+        base.visibility = "public";
+        break;
+      case "private":
+        base.visibility = "private";
+        break;
+      case "favourite":
+        base.isFavourite = true;
+        break;
+      default:
+        break;
+    }
 
-                    {/* Tags & Rating Filter */}
-                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 w-full">
-                        <div className="flex flex-col lg:flex-row flex-1 gap-3 lg:gap-x-4 w-full">
-                            <div className="w-full lg:w-1/2 min-w-0">
-                                <MultiSelectFilter
-                                    placeholder="Search by Realm tags"
-                                    value={includeTags}
-                                    onChange={(tags) => {
-                                        setIncludeTags(tags)
-                                        setPage(1)
-                                    }}
-                                    className="rounded-full"
-                                />
-                            </div>
-                            <div className="w-full lg:w-1/2 min-w-0">
-                                <MultiSelectFilter
-                                    placeholder="Tags to exclude from search"
-                                    value={excludeTags}
-                                    onChange={(tags) => {
-                                        setExcludeTags(tags)
-                                        setPage(1)
-                                    }}
-                                    className="rounded-full"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    return base;
+  }, [
+    page,
+    activeTab,
+    debouncedSearch,
+    ratingFilter,
+    sortBy,
+    sortOrder,
+    includeTags,
+    excludeTags,
+  ]);
 
-            {/* Scrollable Content Section - content + pagination scroll together */}
-            <div className="flex-1 min-h-0 overflow-y-auto flex flex-col pt-4">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col min-h-0 flex-1">
-                    <div className=" py-3 pt-5 sticky top-0 z-10 w-full px-4 overflow-x-auto">
-                        <TabsList className="w-full min-w-max bg-primary/20 flex-nowrap justify-start sm:justify-center">
-                            <TabsTrigger value="all" className="whitespace-nowrap shrink-0">All</TabsTrigger>
-                            <TabsTrigger value="favourite" className="whitespace-nowrap shrink-0">Favourites</TabsTrigger>
-                        </TabsList>
-                    </div>
-                    <TabsContent value="all" className="px-3 sm:px-4 py-4 flex-1 min-h-0 mt-0">
-                        <div className='mt-4'>
-                            {isLoading && realms.length === 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-4">
-                                    {Array.from({ length: 6 }).map((_, i) => (
-                                        <FolderCardSkeleton key={`skeleton-${i}`} />
-                                    ))}
-                                </div>
-                            ) : realms.length > 0 ? (
-                                <MasonryGrid
-                                    items={realms}
-                                    className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6"
-                                    renderItem={(realm) => (
-                                        <RealmCard
-                                            folder={realm}
-                                        />
-                                    )}
-                                />
-                            ) : (
-                                <DataNotFound />
-                            )}
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="favourite" className="px-3 sm:px-4 py-2 flex-1 min-h-0 mt-0">
-                        <div className='mt-4'>
-                            {isFavLoading && favRealms.length === 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-4">
-                                    {Array.from({ length: 6 }).map((_, i) => (
-                                        <FolderCardSkeleton key={`fav-skeleton-${i}`} />
-                                    ))}
-                                </div>
-                            ) : favRealms.length > 0 ? (
-                                <MasonryGrid
-                                    items={favRealms}
-                                    className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6"
-                                    renderItem={(realm) => (
-                                        <RealmCard
-                                            folder={realm}
-                                        />
-                                    )}
-                                />
-                            ) : (
-                                <DataNotFound />
-                            )}
-                        </div>
-                    </TabsContent>
-                </Tabs>
+  const { data, isLoading, isError, error, refetch } = useListRealms(filters);
 
-                {/* Pagination - inside scrollable area, always visible when scrolling down */}
-                {activeTab === "all" && totalPages > 1 && (
-                    <div className="py-4 sm:py-6 px-2 flex justify-center">
-                        <PaginationComponent
-                            currentPage={page}
-                            totalPages={totalPages}
-                            onPageChange={(p) => setPage(p)}
-                        />
-                    </div>
-                )}
-                {activeTab === "favourite" && favTotalPages > 1 && (
-                    <div className="py-4 sm:py-6 px-2 flex justify-center">
-                        <PaginationComponent
-                            currentPage={favPage}
-                            totalPages={favTotalPages}
-                            onPageChange={(p) => setFavPage(p)}
-                        />
-                    </div>
-                )}
-            </div>
+  const realms = data?.realms ?? [];
+  const totalPages = data?.pagination?.totalPages ?? 1;
 
-            {/* Fixed Footer */}
-            <div className="flex-none mt-auto">
-                <Footer />
-            </div>
-        </Container>
-    )
-}
+  useEffect(() => {
+    if (!isLoading && data !== undefined) {
+      setIsFilterChanging(false);
+    }
+  }, [isLoading, data]);
 
-export default RealmsPage
+  const masonryClass =
+    "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6";
+
+  return (
+    <Container className="relative flex min-h-[calc(100vh-8rem)] flex-col py-6">
+      <GlobalLoader isLoading={isFilterChanging && isLoading} />
+
+      <div className="sticky top-0 z-30 mb-3 bg-background pb-3 pt-2">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Realms</h1>
+            <p className="text-sm text-muted-foreground">
+              Create themed spaces, link characters, and open realm chats from one place.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/realms/create">
+              <Button className="gap-2 rounded-full">
+                <Plus className="size-4" />
+                Create Realm
+              </Button>
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="shrink-0 rounded-full" variant="outline">
+                  Realm Actions <Menu className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-72" align="end">
+                <DropdownMenuLabel>View &amp; sort</DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>Sort: Name</DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        {SORT_OPTIONS.slice(0, 2).map((opt) => (
+                          <DropdownMenuItem
+                            key={opt.label}
+                            onClick={() => handleSort(opt.sortBy, opt.sortOrder)}
+                          >
+                            {opt.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>Sort: Date</DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        {SORT_OPTIONS.slice(2).map((opt) => (
+                          <DropdownMenuItem
+                            key={opt.label}
+                            onClick={() => handleSort(opt.sortBy, opt.sortOrder)}
+                          >
+                            {opt.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <Link href="/realms/create">
+                    <DropdownMenuItem>Create Realm</DropdownMenuItem>
+                  </Link>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-4 space-y-3">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="min-w-0">
+            <SearchField
+              placeholder="Search by realm name or description"
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onDebouncedChange={handleDebouncedSearch}
+              debounceMs={500}
+              className="bg-surface-base"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <ToggleSwitch
+              options={[
+                { label: "NSFW", value: "NSFW" },
+                { label: "SFW", value: "SFW" },
+              ]}
+              defaultValue={ratingFilter || "SFW"}
+              onChange={handleRatingChange}
+              className="bg-surface-base"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="min-w-0">
+            <MultiSelectFilter
+              placeholder="Include tags"
+              value={includeTags}
+              onChange={handleIncludeTagsChange}
+              defaultCategory={ratingFilter || "SFW"}
+              className="rounded-full border-border bg-surface-base"
+            />
+          </div>
+          <div className="min-w-0">
+            <MultiSelectFilter
+              placeholder="Exclude tags"
+              value={excludeTags}
+              onChange={handleExcludeTagsChange}
+              defaultCategory={ratingFilter || "SFW"}
+              className="rounded-full border-border bg-surface-base"
+            />
+          </div>
+        </div>
+
+        <div className="text-xs text-muted-foreground">
+          Use tabs and filters to browse realms. Realm cards support actions from each card menu.
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col">
+        <Tabs value={activeTab} onValueChange={onTabChange} className="flex min-h-0 flex-1 flex-col">
+          <div className="sticky top-24 z-20 mb-3 bg-background py-2">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-4">
+              {TABS.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value} className="whitespace-nowrap">
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          <TabsContent value={activeTab} className="mt-0 min-h-0 flex-1 px-0 py-1">
+            {isLoading && realms.length === 0 ? (
+              <div className={`mt-4 grid ${masonryClass}`}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <FolderCardSkeleton key={`skeleton-${i}`} />
+                ))}
+              </div>
+            ) : isError ? (
+              <ErrorEmptyState
+                type="error"
+                error={error}
+                onRetry={() => refetch()}
+                title="Failed to load realms"
+                description="Something went wrong while fetching realms. Try again."
+              />
+            ) : !realms.length ? (
+              <ErrorEmptyState
+                type="empty"
+                title="No realms found"
+                description="No realm matches the current filters. Try another tab, search, tags, or rating."
+              />
+            ) : (
+              <div className="mt-4" style={{ opacity: isLoading ? 0.5 : 1 }}>
+                <MasonryGrid
+                  items={realms}
+                  className={masonryClass}
+                  renderItem={(realm) => <RealmCard folder={realm} />}
+                />
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {!isLoading && !isError && totalPages > 1 && (
+          <div className="mt-6 flex justify-center border-t border-border pt-4">
+            <PaginationComponent
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="mt-auto flex-none">
+        <Footer />
+      </div>
+    </Container>
+  );
+};
+
+export default RealmsPage;

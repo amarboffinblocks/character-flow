@@ -123,7 +123,7 @@ const LinkBackgroundDialog: React.FC<LinkBackgroundDialogProps> = ({
                     <Button
                         onClick={handleSave}
                         disabled={!selectedId || isLoading}
-                        className="rounded-full bg-primary hover:bg-primary/90 text-white"
+                        className="rounded-full bg-primary hover:bg-accent-hover text-primary-foreground"
                     >
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Link Background

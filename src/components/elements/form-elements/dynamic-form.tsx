@@ -36,9 +36,9 @@ const TotalTokenCounter = ({ schema }: { schema: FormData[] }) => {
 
   return (
     <div className="rounded-xl flex flex-col justify-center h-full">
-      <div className="text-xl font-semibold text-right text-white flex items-baseline justify-end gap-1">
+      <div className="text-xl font-semibold text-right text-foreground flex items-baseline justify-end gap-1">
         {totalTokens}
-        <span className="text-sm font-bold opacity-50">Tokens used</span>
+        <span className="text-sm font-medium text-muted-foreground">Tokens used</span>
       </div>
     </div>
   );
@@ -173,7 +173,6 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               <div className="shrink-0">
                 <Button
                   type="button"
-                  className="px-8 bg-primary text-white hover:bg-primary/90"
                   disabled={isSubmitting || submitButtonDisabled}
                   onClick={async () => {
                     const errors = await validateForm();

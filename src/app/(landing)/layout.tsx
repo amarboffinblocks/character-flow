@@ -2,7 +2,6 @@
 
 import React from "react";
 import LandingFooter from "@/components/layout/landing-footer";
-import LandingHeader from "@/components/layout/landing-header";
 import { ShootingStars } from "@/components/elements/shooting-stars";
 import { StarsBackground } from "@/components/elements/stars-background";
 import { usePathname, useRouter } from "next/navigation";
@@ -29,8 +28,6 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
                     <StarsBackground />
                 </>
             )}
-
-            <LandingHeader />
 
             <main className="flex-1 w-full flex flex-col items-center">
                 {children}

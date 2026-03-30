@@ -1,14 +1,16 @@
 "use client"
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Menu, Trash2, CheckCircle, Copy, Link as LinkIcon, Download as DownloadIcon, Loader2, TriangleAlert } from 'lucide-react'
+import { Menu, Trash2, CheckCircle, Download as DownloadIcon, Loader2, TriangleAlert, Image as ImageIcon } from 'lucide-react'
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuPortal,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -24,15 +26,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Button } from '../ui/button'
 import BackgroundCard from '../cards/background-card'
 import BackgroundCardSkeleton from '../cards-skeletons/background-card-skeleton'
 import { PaginationComponent } from '../elements/pagination-element'
-import SearchField from '../elements/search-field'
-import { ToggleSwitch } from '../elements/toggle-switch'
 import { useListBackgrounds, useImportBackground, useBulkImportBackgrounds, useDeleteBackground, useSetDefaultBackground } from '@/hooks/background'
 import ImportBackgroundDialog from '../elements/import-background-dialog'
 import ErrorEmptyState from '../elements/error-empty-state'
+import { Button } from '../ui/button'
 
 const SKELETON_COUNT = 12
 const GRID_COLS = "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3"
@@ -205,27 +205,40 @@ const BackgroundPage = () => {
   }, [selectedIds, handleSetDefault])
 
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="max-w-3xl mx-auto w-full flex justify-end items-center gap-4 mt-6">
+    <div className="flex flex-col h-full relative py-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Backgrounds</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Organize, import, and manage your background assets in one place.
+        </p>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+
+        <Button
+          onClick={() => setImportDialogOpen(true)}
+          className="rounded-full gap-2 "
+        >
+          <ImageIcon className="h-4 w-4" />
+          Import
+        </Button>
         <Button
           onClick={() => setBulkImportDialogOpen(true)}
+          variant="secondary"
           className="rounded-full gap-2"
         >
           <DownloadIcon className="h-4 w-4 rotate-180" />
           Bulk Import
         </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="rounded-full shrink-0">
-              Background Menu <Menu className="ml-2 h-4 w-4" />
+            <Button className="rounded-full shrink-0 ml-auto" variant="outline">
+              Background Actions <Menu className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-72" align="end">
+            <DropdownMenuLabel>Batch Actions</DropdownMenuLabel>
             <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2" disabled={selectedIds.size === 0}>
-                <LinkIcon className="h-4 w-4" /> Link Selected to Account
-              </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2"
                 onClick={handleSetDefaultSelected}
@@ -233,22 +246,7 @@ const BackgroundPage = () => {
               >
                 <CheckCircle className="h-4 w-4" /> Make Selected Global Default
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" disabled={selectedIds.size === 0}>
-                <Copy className="h-4 w-4" /> Duplicate Selected
-              </DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="gap-2">
-                  <LinkIcon className="h-4 w-4" /> Add to
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem>Character</DropdownMenuItem>
-                    <DropdownMenuItem>Persona</DropdownMenuItem>
-                    <DropdownMenuItem>LoreBook</DropdownMenuItem>
-                    <DropdownMenuItem>Realm</DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
+              <DropdownMenuSeparator />
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="gap-2">
                   <DownloadIcon className="h-4 w-4 rotate-180" /> Import
@@ -264,20 +262,7 @@ const BackgroundPage = () => {
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="gap-2">
-                  <DownloadIcon className="h-4 w-4" /> Export
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem>Export Selected</DropdownMenuItem>
-                    <DropdownMenuItem>Bulk Export</DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-              <DropdownMenuItem className="gap-2" disabled={selectedIds.size === 0}>
-                <LinkIcon className="h-4 w-4" /> Share Selected
-              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
                 className="gap-2"
@@ -296,7 +281,7 @@ const BackgroundPage = () => {
         </DropdownMenu>
       </div>
 
-      <div className="flex-1 mt-8 min-h-0">
+      <div className="flex-1 min-h-0">
         {isLoading ? (
           <div className={`grid ${GRID_COLS} gap-3 sm:gap-4`}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
@@ -328,7 +313,7 @@ const BackgroundPage = () => {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-6 pt-4 border-t border-border/50">
+        <div className="mt-6 pt-4 border-t border-border">
           <PaginationComponent
             currentPage={page}
             totalPages={totalPages}
@@ -354,26 +339,21 @@ const BackgroundPage = () => {
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-primary/15 backdrop-blur-3xl border-primary/30 rounded-4xl p-0 gap-0 overflow-hidden shadow-xl shadow-primary/5 sm:max-w-md">
+        <AlertDialogContent className="bg-popover border-border rounded-3xl p-0 gap-0 overflow-hidden shadow-xl sm:max-w-md">
           <AlertDialogHeader className="px-6 pt-8 pb-6 text-center">
-            {/* Warning icon - prominent visual anchor */}
             <div className="flex justify-center mb-4">
-              <div className="flex size-14 items-center justify-center rounded-full bg-amber-500/20 border-2 border-amber-500/40">
-                <TriangleAlert className="size-7 text-amber-500" aria-hidden />
+              <div className="flex size-14 items-center justify-center rounded-full bg-surface-active border-2 border-border">
+                <TriangleAlert className="size-7 text-warning" aria-hidden />
               </div>
             </div>
-
-            {/* Title - clear and direct */}
-            <AlertDialogTitle className="text-xl font-semibold  text-white text-center leading-tight">
+            <AlertDialogTitle className="text-xl font-semibold text-center leading-tight">
               Permanently delete backgrounds?
             </AlertDialogTitle>
-
-            {/* Description - descriptive with good spacing */}
             <AlertDialogDescription asChild>
               <div className="mt-4 space-y-3 text-sm text-muted-foreground text-center">
                 <p>
                   You are about to permanently delete{" "}
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-foreground">
                     {selectedIds.size} selected background{selectedIds.size !== 1 ? "s" : ""}
                   </span>
                   .
@@ -385,10 +365,10 @@ const BackgroundPage = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <AlertDialogFooter className="px-6 py-4 bg-primary/5 border-t border-primary/20 gap-3 justify-center flex-wrap">
+          <AlertDialogFooter className="px-6 py-4 bg-surface-subtle border-t border-border gap-3 justify-center flex-wrap">
             <AlertDialogCancel
               disabled={isBatchDeleting}
-              className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-white flex-1 sm:flex-initial"
+              className="rounded-full border-border hover:bg-surface-hover hover:border-focus-ring text-foreground flex-1 sm:flex-initial"
             >
               Cancel
             </AlertDialogCancel>
@@ -398,7 +378,7 @@ const BackgroundPage = () => {
                 handleConfirmDeleteSelected()
               }}
               disabled={isBatchDeleting}
-              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 border-0 flex-1 sm:flex-initial"
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-danger border-0 flex-1 sm:flex-initial"
             >
               {isBatchDeleting ? (
                 <>

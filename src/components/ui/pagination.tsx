@@ -57,7 +57,7 @@ function PaginationLink({
         buttonVariants({
           variant: isActive ? "default" : "ghost",
           size,
-          className: !isActive && "bg-primary/60 text-white"
+          className: !isActive && "text-muted-foreground hover:bg-muted hover:text-foreground"
         }),
         className
       )}
@@ -108,7 +108,7 @@ function PaginationEllipsis({
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn("flex size-9 items-center justify-center text-white", className)}
+      className={cn("flex size-9 items-center justify-center text-muted-foreground", className)}
       {...props}
     >
       <MoreHorizontalIcon className="size-4" />

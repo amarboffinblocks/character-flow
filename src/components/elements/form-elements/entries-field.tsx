@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useField } from 'formik';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -168,7 +168,7 @@ const EntriesField: React.FC<EntriesFieldProps> = ({ name = 'entries' }) => {
                 return (
                     <div
                         key={index}
-                        className='border backdrop-blur-sm border-primary rounded-2xl p-4 relative'
+                        className="relative rounded-2xl border border-border bg-surface-subtle p-4 shadow-sm"
                     >
                         {/* Remove Entry Button - Top Right Corner */}
                         {entries.length > 1 && (
@@ -177,15 +177,14 @@ const EntriesField: React.FC<EntriesFieldProps> = ({ name = 'entries' }) => {
                                 onClick={() => handleRemoveEntry(index)}
                                 variant="ghost"
                                 size="icon"
-                                className='absolute top-2 right-2 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10'
+                                className="absolute right-2 top-2 h-8 w-8 text-destructive hover:bg-muted hover:text-destructive"
                                 aria-label="Remove entry"
                             >
                                 <Trash2 />
                             </Button>
                         )}
 
-                        <div className=''>
-                            <div className="w-full space-y-2">
+                        <div className="w-full space-y-2">
                                 <Label htmlFor={`${name}-${index}-keywords`}>
                                     Keywords or Terms
                                 </Label>
@@ -198,12 +197,11 @@ const EntriesField: React.FC<EntriesFieldProps> = ({ name = 'entries' }) => {
                                     placeholder="Please enter the Keyword or Term here. You can add multiple by separating them with a comma."
                                     className="w-full"
                                 />
-                                <div className="flex justify-between items-center text-xs px-1 text-white">
+                                <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
                                     <span className="invisible">placeholder</span>
                                 </div>
-                            </div>
                         </div>
-                        <div className="w-full space-y-2">
+                        <div className="mt-4 w-full space-y-2">
                             <Label htmlFor={`${name}-${index}-context`}>
                                 Context
                             </Label>
@@ -216,7 +214,7 @@ const EntriesField: React.FC<EntriesFieldProps> = ({ name = 'entries' }) => {
                                 placeholder='Enter a short description about the keyword or term here. Please keep in mind the shorter the better.'
                                 className="w-full"
                             />
-                            <div className="flex justify-between items-center text-xs px-1 text-white">
+                            <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
                                 <span className="invisible">placeholder</span>
                                 <span>{countTokens(entry.context)} Tokens</span>
                             </div>
@@ -230,7 +228,7 @@ const EntriesField: React.FC<EntriesFieldProps> = ({ name = 'entries' }) => {
                 type='button'
                 onClick={handleAddEntry}
                 variant="outline"
-                className="w-full  mt-2 border-primary/50 hover:bg-primary/10 hover:border-primary transition-all"
+                className="mt-2 w-full border-border text-foreground transition-colors hover:bg-surface-hover"
             >
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Entry

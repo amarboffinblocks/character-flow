@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
 interface ToggleSwitchProps {
     options: { label: string; value: string }[];
@@ -14,7 +15,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
     options,
     defaultValue,
     onChange,
-    // className = "",
+    className,
 }) => {
     const [active, setActive] = React.useState(defaultValue || options[0]?.value);
 
@@ -29,14 +30,20 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
             type="single"
             value={active}
             onValueChange={handleChange}
-            className="bg-primary/40 backdrop-blur-3xl px-2 py-1 rounded-full border border-primary/80 "
+            className={cn(
+                "rounded-full border border-border bg-surface-subtle p-1",
+                className
+            )}
         >
             {options.map((option) => (
                 <ToggleGroupItem
                     key={option.value}
                     value={option.value}
-                    className={`flex-1 !rounded-full  text-white hover:bg-transparent h-7  px-4 !text-sm cursor-pointer font-medium transition-all ${active === option.value ? "bg-primary" : "bg-transparent"
-                        }`}
+                    className={cn(
+                        "h-8 !rounded-full px-4 text-sm font-medium transition-colors",
+                        "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
+                        "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    )}
                 >
                     {option.label}
                 </ToggleGroupItem>

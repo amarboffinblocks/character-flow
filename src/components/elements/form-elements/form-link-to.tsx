@@ -148,12 +148,10 @@ const FormLinkTo: React.FC<FormLinkToProps> = ({
   }, [value, normalizedValue, setValue]);
 
   const handleValueChange = (newValues: string[]) => {
-    console.log("hello")
     setValue(newValues);
     setTouched(true, false); // Mark as touched without triggering validation
   };
 
-  console.log("hellos", options)
   return (
     <div className={cn("w-full space-y-2", className)}>
       {label && (
@@ -194,9 +192,9 @@ const FormLinkTo: React.FC<FormLinkToProps> = ({
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col flex-1 min-w-0">
-              <p className="font-medium text-white truncate">{item.label}</p>
+              <p className="font-medium text-foreground truncate">{item.label}</p>
               {item.meta?.description && (
-                <span className="text-xs text-gray-300 line-clamp-1">
+                <span className="text-xs text-muted-foreground line-clamp-1">
                   {item.meta.description}
                 </span>
               )}
@@ -204,7 +202,9 @@ const FormLinkTo: React.FC<FormLinkToProps> = ({
           </div>
         )}
         className={cn(
-          meta.touched && meta.error && "border-red-500 bg-red-500/20"
+          meta.touched &&
+            meta.error &&
+            "border-destructive ring-2 ring-destructive"
         )}
       />
 

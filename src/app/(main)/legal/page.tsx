@@ -10,7 +10,6 @@ export const policyLinks = [
     { name: "Content Removal Policy", href: "/legal/content-removal-policy" },
     { name: "Cookie Policy", href: "/legal/cookie-policy" },
     { name: "DMCA Policy", href: "/legal/dmca-policy" },
-    { name: "Forum Community Guidelines", href: "/legal/forum-community-guidelines" },
     { name: "Privacy Policy", href: "/legal/privacy-policy" },
     { name: "Terms of Service", href: "/legal/terms-of-service" },
     { name: "Underage Policy", href: "/legal/underage-policy" },

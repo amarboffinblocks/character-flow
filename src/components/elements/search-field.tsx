@@ -2,6 +2,7 @@
 import { Search } from 'lucide-react'
 import React, { useState, useEffect, useCallback } from 'react'
 import { Input } from '../ui/input'
+import { cn } from '@/lib/utils'
 
 interface Props {
     placeholder?: string
@@ -22,7 +23,6 @@ const SearchField: React.FC<Props> = ({
     ...props
 }) => {
     const [internalValue, setInternalValue] = useState<string>("");
-    const [debouncedValue, setDebouncedValue] = useState<string>("");
 
     const isControlled = value !== undefined && onChange !== undefined;
     const inputValue = isControlled ? value : internalValue;
@@ -31,7 +31,6 @@ const SearchField: React.FC<Props> = ({
     useEffect(() => {
         const timer = setTimeout(() => {
             const currentValue = isControlled ? value || "" : internalValue;
-            setDebouncedValue(currentValue);
             onDebouncedChange?.(currentValue);
         }, debounceMs);
 
@@ -49,10 +48,17 @@ const SearchField: React.FC<Props> = ({
     }, [isControlled, onChange]);
 
     return (
-        <div className={`flex flex-1 items-center bg-primary/20 backdrop-blur-2xl border rounded-full pl-4  border-primary/70 ${className}`}>
-            <Search className='text-muted size-4' />
+        <div
+            className={cn(
+                "flex h-11 w-full items-center rounded-full border border-border bg-surface-subtle px-4",
+                "text-foreground transition-colors",
+                "focus-within:border-focus-ring focus-within:bg-surface-active",
+                className
+            )}
+        >
+            <Search className='text-muted-foreground size-4' />
             <Input
-                className='border-none bg-transparent backdrop-blur-none focus-visible:ring-0 focus-visible:border-none'
+                className="h-full border-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-none"
                 placeholder={placeholder}
                 value={inputValue}
                 onChange={handleChange}

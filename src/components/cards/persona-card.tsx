@@ -3,13 +3,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FolderPlus, HeartPlus, Heart, Link2, MoreVertical, Save, BookmarkCheck, Share2, SquarePen, Upload, Trash, CopyPlus, MessagesSquare } from "lucide-react";
+import { HeartPlus, Heart, Link2, MoreHorizontal, Save, BookmarkCheck, SquarePen, Upload, Trash2, MessagesSquare, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils/date-utils";
-import Rating from "../elements/rating";
 import { Checkbox } from "../ui/checkbox";
 import {
     AlertDialog,
@@ -21,9 +20,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useTogglePersonaFavourite, useTogglePersonaSaved, useDeletePersona, useDuplicatePersona, useExportEntity, useCurrentUser } from "@/hooks";
+import { useTogglePersonaFavourite, useTogglePersonaSaved, useDeletePersona, useCurrentUser } from "@/hooks";
 import { exportPersonaJson } from "@/lib/api/personas/endpoints";
-import { getPersona, updatePersona } from "@/lib/api/personas";
+import { updatePersona } from "@/lib/api/personas";
 import { updateCharacter } from "@/lib/api/characters";
 import type { Persona } from "@/lib/api/personas";
 import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
@@ -109,16 +108,6 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         },
     });
 
-    // Duplicate persona hook
-    const { duplicatePersona, isDuplicating } = useDuplicatePersona({
-        showToasts: true,
-    });
-
-    // Client-side Export hook (PNG/JSON)
-    const { exportPng, isExporting: isExportingPng } = useExportEntity({
-        showToasts: true,
-    });
-
     const [isExportingJson, setIsExportingJson] = useState(false);
 
     const handleToggleFavourite = useMemo(() => {
@@ -132,10 +121,6 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
     const handleDeleteClick = useMemo(() => {
         return () => setDeleteDialogOpen(true);
     }, []);
-
-    const handleDuplicateClick = useMemo(() => {
-        return () => duplicatePersona(persona.id);
-    }, [persona.id, duplicatePersona]);
 
     const handleExportJsonClick = useMemo(() => {
         return async () => {
@@ -157,98 +142,95 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
     return (
         <Card
             className={cn(
-                "group rounded-2xl w-full overflow-hidden bg-primary/20 backdrop-blur-xl border border-white/10",
-                "hover:border-primary/50 hover:bg-primary/25 hover:shadow-lg hover:shadow-primary/10",
-                "transition-all duration-300 ease-out relative flex flex-row min-h-[200px]"
+                "group w-full overflow-hidden border border-border bg-surface-base",
+                "hover:border-focus-ring hover:bg-surface-hover",
+                "transition-colors duration-200 relative flex min-h-[220px] flex-col sm:flex-row",
+                isSelected && "border-focus-ring bg-surface-selected"
             )}
         >
-            {/* Left: Persona image - 40% width, full height */}
-            <CardHeader className="p-0 m-0 relative shrink-0 w-[40%] min-w-[40%] self-stretch overflow-hidden border-r border-white/5 rounded-l-2xl">
-                <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 text-white drop-shadow-lg">
+            <CardHeader className="p-0 m-0 relative shrink-0 h-40 sm:h-auto sm:w-[38%] sm:min-w-[38%] self-stretch overflow-hidden border-b sm:border-b-0 sm:border-r border-border">
+                <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 text-foreground">
                     <Checkbox
                         id={`persona-${persona.id}`}
                         checked={isSelected}
                         onCheckedChange={(checked) => {
                             onSelect?.(persona.id, checked === true);
                         }}
-                        className="bg-gray-900 border-primary/80 data-[state=checked]:bg-gray-900 cursor-pointer data-[state=checked]:text-white text-white rounded-full size-6"
+                        className="bg-surface-active border-border data-[state=checked]:bg-primary cursor-pointer data-[state=checked]:text-primary-foreground text-foreground rounded-full size-6"
                     />
                 </div>
 
-                <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5">
                     <Button
                         size="icon"
                         variant="ghost"
-                        className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
+                        className="size-7 rounded-full bg-surface-selected hover:bg-surface-hover text-foreground transition-colors"
                         onClick={(e) => { e.stopPropagation(); handleToggleFavourite(); }}
                         disabled={isTogglingFavourite}
                     >
-                        {isFavourite ? <Heart className="size-3.5 fill-red-500 text-red-500" /> : <HeartPlus className="size-3.5" />}
+                        {isFavourite ? <Heart className="size-3.5 fill-destructive text-destructive" /> : <HeartPlus className="size-3.5" />}
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
+                                className="size-7 rounded-full bg-surface-selected hover:bg-surface-hover text-foreground transition-colors"
                             >
-                                <MoreVertical className="size-3.5" />
+                                <MoreHorizontal className="size-3.5" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="w-64">
                             <DropdownMenuSub>
-                                <DropdownMenuSubTrigger className="w-full space-x-4"><Link2 className="w-4 h-4 mr-4 text-white" /> Link</DropdownMenuSubTrigger>
+                                <DropdownMenuSubTrigger className="w-full"><Link2 className="w-4 h-4 mr-2 text-foreground" /> Link</DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
                                         <DropdownMenuItem className="cursor-pointer" onClick={() => openLinkDialog("character")}>
-                                            <Link2 className="w-4 h-4 mr-2 text-white" />Link to Character
+                                            <Link2 className="w-4 h-4 mr-2 text-foreground" />Link to Character
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="cursor-pointer" onClick={() => openLinkDialog("lorebook")}>
-                                            <Link2 className="w-4 h-4 mr-2 text-white" />Link to Lorebook
+                                            <Link2 className="w-4 h-4 mr-2 text-foreground" />Link to Lorebook
                                         </DropdownMenuItem>
                                     </DropdownMenuSubContent>
                                 </DropdownMenuPortal>
                             </DropdownMenuSub>
-                            {/* <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                <Share2 className="w-4 h-4 mr-2 text-white" /> Share
-                            </DropdownMenuItem> */}
                             <DropdownMenuSub>
-                                <DropdownMenuSubTrigger className="w-full space-x-4"><Upload className="w-4 h-4 mr-4 text-white" /> Export</DropdownMenuSubTrigger>
+                                <DropdownMenuSubTrigger className="w-full"><Upload className="w-4 h-4 mr-2 text-foreground" /> Export</DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
                                        
                                         <DropdownMenuItem onClick={handleExportJsonClick} disabled={isExportingJson}>
-                                            <Upload className="w-4 h-4 mr-2 text-white" />.Json
+                                            <Upload className="w-4 h-4 mr-2 text-foreground" /> .json
                                         </DropdownMenuItem>
                                     </DropdownMenuSubContent>
                                 </DropdownMenuPortal>
                             </DropdownMenuSub>
                             <DropdownMenuItem
-                                className="hover:bg-gray-800 transition cursor-pointer"
+                                className="hover:bg-surface-hover transition cursor-pointer"
                                 onClick={handleToggleFavourite}
                                 disabled={isTogglingFavourite}
                             >
                                 {isFavourite ? (
-                                    <><Heart className="w-4 h-4 mr-2 text-white fill-red-500 stroke-red-500" />Remove from Favourites</>
+                                    <><Heart className="w-4 h-4 mr-2 text-destructive fill-destructive stroke-destructive" />Remove from Favourites</>
                                 ) : (
-                                    <><HeartPlus className="w-4 h-4 mr-2 text-white" />Add to Favourites</>
+                                    <><HeartPlus className="w-4 h-4 mr-2 text-foreground" />Add to Favourites</>
                                 )}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                className="hover:bg-gray-800 transition cursor-pointer"
+                                className="hover:bg-surface-hover transition cursor-pointer"
                                 onClick={handleToggleSaved}
                                 disabled={isTogglingSaved}
                             >
                                 {isSaved ? (
-                                    <><BookmarkCheck className="w-4 h-4 mr-2 text-white fill-green-500 stroke-green-500" />Remove from Saved</>
+                                    <><BookmarkCheck className="w-4 h-4 mr-2 text-success fill-success stroke-success" />Remove from Saved</>
                                 ) : (
-                                    <><Save className="w-4 h-4 mr-2 text-white" />Save Persona</>
+                                    <><Save className="w-4 h-4 mr-2 text-foreground" />Save Persona</>
                                 )}
                             </DropdownMenuItem>
                             {isOwner && (
                                 <Link href={`/personas/${persona.id}/edit`}>
-                                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                        <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
+                                    <DropdownMenuItem className="hover:bg-surface-hover transition cursor-pointer">
+                                        <SquarePen className="w-4 h-4 mr-2 text-foreground" /> Edit
                                     </DropdownMenuItem>
                                 </Link>
                             )}
@@ -258,22 +240,18 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                                 className="cursor-pointer"
                                 onClick={handleDeleteClick}
                             >
-                                <Trash className="mr-2 w-4 h-4 text-white" /> Delete
+                                <Trash2 className="mr-2 w-4 h-4" /> Delete
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
 
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 z-1 bg-linear-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-
-                {/* Image with skeleton loader */}
-                <div className="absolute inset-0 cursor-pointer overflow-hidden rounded-l-2xl transition-transform duration-300 group-hover:scale-105">
+                <div className="absolute inset-0 cursor-pointer overflow-hidden">
                     {!imageLoaded && !imageError && (
-                        <Skeleton className="absolute inset-0 rounded-l-2xl bg-primary/20 animate-pulse" />
+                        <Skeleton className="absolute inset-0 bg-surface-active animate-pulse" />
                     )}
                     {imageError && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-primary/30 text-3xl font-bold text-white/90 rounded-l-2xl">
+                        <div className="absolute inset-0 flex items-center justify-center bg-surface-active text-3xl font-bold text-foreground">
                             {avatarFallback}
                         </div>
                     )}
@@ -294,39 +272,38 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
 
             {/* Right: Content + Footer */}
             <div className="flex flex-col flex-1 min-w-0">
-                <CardContent className="space-y-2.5 py-4 px-5 flex-1">
+                <CardContent className="space-y-3 py-4 px-5 flex-1">
                     <div className="flex justify-between items-start gap-2">
-                        <CardTitle className="text-white font-semibold text-lg capitalize leading-tight truncate">
+                        <CardTitle className="font-semibold text-base sm:text-lg capitalize leading-tight line-clamp-1">
                             {persona.name}
                         </CardTitle>
                         <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-xs text-muted-foreground/80 font-medium tabular-nums">{characterCount} characters</span>
+                            <span className="text-xs text-muted-foreground tabular-nums">{characterCount} characters</span>
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize font-normal">
                                 {persona.rating}
                             </Badge>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <Rating value={persona.rating === "NSFW" ? 5 : 3.5} size={12} readOnly={true} />
-                        <span className="text-xs">({persona.rating})</span>
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span className="capitalize">{persona.visibility}</span>
+                        <span>{characterCount} characters</span>
                     </div>
                     {hasTags && (
                         <div className="flex gap-1.5 flex-wrap">
                             {persona.tags?.slice(0, 5).map((tag, idx) => (
-                                <Badge key={`${persona.id}-tag-${idx}`} variant="outline" className="text-[10px] px-2 py-0 font-normal border-white/20 text-white/70">
+                                <Badge key={`${persona.id}-tag-${idx}`} variant="outline" className="text-[10px] px-2 py-0 font-normal border-border text-muted-foreground">
                                     {tag}
                                 </Badge>
                             ))}
                         </div>
                     )}
-                    <CardDescription className="text-muted-foreground/90 text-sm line-clamp-3 leading-relaxed">
+                    <CardDescription className="text-sm line-clamp-3">
                         {persona.description || "No description"}
                     </CardDescription>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground/70">
-                        <span className="capitalize">{persona.visibility}</span>
+                    <div className="flex items-center justify-end">
                         {isOwner && (
                             <Link href={`/personas/${persona.id}/edit`} onClick={(e) => e.stopPropagation()}>
-                                <Button size="sm" variant="ghost" className="h-7 px-2 cursor-pointer group bg-primary/20 text-xs gap-1.5 -mr-2 rounded-full">
+                                <Button size="sm" variant="ghost" className="h-7 px-2 cursor-pointer bg-surface-selected text-xs gap-1.5 rounded-full hover:bg-surface-hover">
                                     <MessagesSquare className="w-3.5 h-3.5" />
                                     Edit
                                 </Button>
@@ -335,7 +312,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                     </div>
                 </CardContent>
 
-                <CardFooter className="flex justify-between items-center px-5 py-2 border-t border-white/5 text-[10px] text-muted-foreground/60 mt-auto gap-2">
+                <CardFooter className="flex justify-between items-center px-5 py-2 border-t border-border text-[10px] text-muted-foreground mt-auto gap-2">
                     <span>Created {formattedCreatedDate}</span>
                     <span>Updated {formattedUpdatedDate}</span>
                 </CardFooter>
@@ -354,21 +331,31 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogContent className="bg-primary/50 backdrop-blur-md border border-primary">
+                <AlertDialogContent className="bg-popover border-border rounded-3xl p-0 gap-0 overflow-hidden shadow-xl sm:max-w-md">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-white">Delete Persona</AlertDialogTitle>
+                        <AlertDialogTitle className="px-6 pt-6">Delete Persona</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete "{persona.name}"? This action cannot be undone and will permanently remove the persona.
+                            Are you sure you want to delete {persona.name}? This action cannot be undone and will permanently remove the persona.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
+                    <AlertDialogFooter className="px-6 py-4 bg-surface-subtle border-t border-border gap-3 justify-center flex-wrap">
                         <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleConfirmDelete}
                             disabled={isDeleting}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            className="rounded-full bg-destructive text-destructive-foreground hover:bg-danger border-0"
                         >
-                            {isDeleting ? "Deleting..." : "Delete"}
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                </>
+                            )}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

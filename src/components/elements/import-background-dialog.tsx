@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, ImageIcon, Loader2, X, FileCheck } from "lucide-react";
+import { Upload, ImageIcon, Loader2, X, FileCheck, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -40,19 +40,24 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [invalidSelection, setInvalidSelection] = useState(false);
 
   const handleFileSelect = useCallback(
     (files: FileList | null) => {
       if (!files || files.length === 0) return;
 
       const newFiles: File[] = [];
+      let invalidCount = 0;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
           newFiles.push(file);
+        } else {
+          invalidCount += 1;
         }
       }
 
+      setInvalidSelection(invalidCount > 0);
       if (newFiles.length === 0) return;
 
       if (isBulk) {
@@ -104,6 +109,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
   const handleClose = useCallback(() => {
     if (!isLoading) {
       setSelectedFiles([]);
+      setInvalidSelection(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -117,6 +123,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
 
   const clearAll = () => {
     setSelectedFiles([]);
+    setInvalidSelection(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -126,18 +133,17 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[520px] rounded-4xl p-0 gap-0 overflow-hidden border-primary/30 bg-primary/15 backdrop-blur-3xl">
-        {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-4 text-left space-y-1.5 border-b border-primary/20">
+      <DialogContent className="sm:max-w-[560px] rounded-3xl p-0 gap-0 overflow-hidden overflow-x-hidden border-border bg-popover">
+        <DialogHeader className="px-6 pt-6 pb-5 text-left space-y-3 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-full bg-primary/25 border border-primary/40">
-              <Upload className="size-5 text-primary" />
+            <div className="flex size-11 items-center justify-center rounded-full border border-border bg-surface-subtle">
+              <Upload className="size-5 text-foreground" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-semibold text-white">
+              <DialogTitle className="text-lg font-semibold">
                 {isBulk ? "Bulk Import Backgrounds" : "Import Background"}
               </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground mt-0.5">
+              <DialogDescription className="mt-1">
                 {isBulk
                   ? "Import multiple background images from JPEG, PNG, WebP or GIF files"
                   : "Add a background image from JPEG, PNG, WebP or GIF"}
@@ -146,37 +152,22 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
           </div>
         </DialogHeader>
 
-        {/* Supported formats */}
-        <div className="px-6 py-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground/80">Supported:</span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-white/80">
-            <ImageIcon className="size-3.5 text-primary" />
-            JPEG
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-white/80">
-            <ImageIcon className="size-3.5 text-primary" />
-            PNG
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-white/80">
-            <ImageIcon className="size-3.5 text-primary" />
-            WebP
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-white/80">
-            <ImageIcon className="size-3.5 text-primary" />
-            GIF
-          </span>
-        </div>
+        <div className="px-6 py-5">
+          {invalidSelection && (
+            <div className="mb-3 flex items-start gap-2 rounded-xl border border-destructive bg-surface-subtle p-3">
+              <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+              <p className="text-xs text-muted-foreground">
+                Some files were skipped because only JPEG, PNG, WebP, and GIF are supported.
+              </p>
+            </div>
+          )}
 
-        {/* Drop zone */}
-        <div className="px-6 pb-6 min-w-0 overflow-x-hidden">
           <div
             className={cn(
-              "relative rounded-2xl border-2 border-dashed transition-all duration-200 overflow-hidden",
-              "cursor-pointer",
-              dragActive && "border-primary bg-primary/15 scale-[1.005]",
-              selectedFiles.length > 0
-                ? "border-primary/40 bg-primary/5"
-                : "border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+              "relative rounded-2xl border border-dashed bg-surface-base transition-colors duration-200 overflow-hidden cursor-pointer",
+              dragActive && "border-focus-ring bg-surface-hover",
+              !dragActive && selectedFiles.length === 0 && "hover:border-focus-ring hover:bg-surface-hover",
+              selectedFiles.length > 0 && "border-border bg-surface-subtle"
             )}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -195,28 +186,28 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
             />
 
             {selectedFiles.length > 0 ? (
-              <div className="p-5 space-y-4 min-w-0 overflow-hidden">
-                <div className="max-h-[200px] overflow-y-auto overflow-x-hidden space-y-2 pr-1 min-w-0">
+              <div className="p-4 space-y-4 min-w-0 overflow-hidden">
+                <div className="max-h-[220px] overflow-y-auto overflow-x-hidden space-y-2 pr-1 min-w-0 w-full">
                   {selectedFiles.map((file, index) => (
                     <div
                       key={`${file.name}-${index}`}
-                      className="flex items-center gap-3 rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 min-w-0 overflow-hidden"
+                      className=" w-full min-w-0 flex  items-start gap-3 overflow-hidden rounded-xl border border-border bg-surface-base px-4 py-3"
                     >
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                        <ImageIcon className="size-5 text-primary" />
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-surface-subtle">
+                        <ImageIcon className="size-4 text-foreground" />
                       </div>
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <p className="font-medium text-sm text-white truncate" title={file.name}>
+                      <div className="min-w-0 max-w-full overflow-hidden">
+                        <p className=" overflow-hidden max-w-xs text-ellipsis whitespace-nowrap font-medium text-sm text-foreground " title={file.name}>
                           {file.name}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                           {formatFileSize(file.size)}
                         </p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 shrink-0 text-white rounded-full opacity-70 hover:opacity-100 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                        className="size-8 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFile(index);
@@ -228,8 +219,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                   ))}
                 </div>
 
-                {/* Summary & actions */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-primary/20 min-w-0">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-border min-w-0">
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <FileCheck className="size-3.5" />
@@ -245,7 +235,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                         e.stopPropagation();
                         fileInputRef.current?.click();
                       }}
-                      className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50"
+                      className="rounded-full"
                       disabled={isLoading}
                     >
                       Add more
@@ -257,7 +247,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                         e.stopPropagation();
                         clearAll();
                       }}
-                      className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="rounded-full text-destructive hover:text-destructive"
                       disabled={isLoading}
                     >
                       Clear all
@@ -266,18 +256,23 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="p-10 text-center">
-                <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
-                  <Upload className="size-8 text-primary/80" />
+              <div className="px-6 py-12 text-center">
+                <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full border border-border bg-surface-subtle">
+                  {dragActive ? (
+                    <FileCheck className="size-7 text-foreground" />
+                  ) : (
+                    <Upload className="size-7 text-foreground" />
+                  )}
                 </div>
-                <p className="text-sm font-medium text-white mb-1">
-                  Drop your image{isBulk ? "s" : ""} here or{" "}
-                  <span className="text-primary font-medium">browse</span>
+                <p className="text-sm font-medium text-foreground mb-1">
+                  {dragActive
+                    ? `Drop to add your image${isBulk ? "s" : ""}`
+                    : `Drop your image${isBulk ? "s" : ""} here or browse`}
                 </p>
                 <p className="text-xs text-muted-foreground mb-4">
                   {isBulk
-                    ? "JPEG, PNG, WebP or GIF images"
-                    : "JPEG, PNG, WebP or GIF image"}
+                    ? "JPEG, PNG, WebP, or GIF images"
+                    : "JPEG, PNG, WebP, or GIF image"}
                 </p>
                 <Button
                   variant="outline"
@@ -287,7 +282,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                     fileInputRef.current?.click();
                   }}
                   disabled={isLoading}
-                  className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50"
+                  className="rounded-full"
                 >
                   Select file{isBulk ? "s" : ""}
                 </Button>
@@ -295,21 +290,20 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
             )}
           </div>
         </div>
-
-        {/* Footer */}
-        <DialogFooter className="px-6 py-4 bg-primary/5 border-t border-primary/20 gap-2">
+        <DialogFooter className="px-6 py-4  gap-2">
           <Button
             variant="outline"
             onClick={handleClose}
             disabled={isLoading}
-            className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50"
+            className="rounded-full"
           >
             Cancel
           </Button>
           <Button
             onClick={handleImport}
             disabled={selectedFiles.length === 0 || isLoading}
-            className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="rounded-full"
+            variant={"default"}
           >
             {isLoading ? (
               <>

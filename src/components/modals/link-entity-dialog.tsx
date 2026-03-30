@@ -110,7 +110,7 @@ const LinkEntityDialog: React.FC<LinkEntityDialogProps> = ({
                     <Button
                         onClick={handleConfirm}
                         disabled={selectedIds.length === 0 || isSubmitting}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        className="bg-primary text-primary-foreground hover:bg-accent-hover"
                     >
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {confirmLabel}

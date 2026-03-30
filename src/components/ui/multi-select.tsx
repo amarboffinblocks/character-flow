@@ -44,11 +44,12 @@ export interface AnimationConfig {
 const multiSelectVariants = cva("m-1 transition-all duration-300 ease-in-out", {
     variants: {
         variant: {
-            default: "border-foreground/10 text-foreground bg-card hover:bg-card/80",
+            default:
+                "border-border text-foreground bg-surface-subtle hover:bg-surface-hover",
             secondary:
-                "border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                "border-border bg-secondary text-secondary-foreground hover:bg-surface-hover",
             destructive:
-                "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+                "border-transparent bg-destructive text-destructive-foreground hover:opacity-90",
             inverted: "inverted",
         },
         badgeAnimation: {
@@ -650,6 +651,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         <Button
                             ref={buttonRef}
                             {...props}
+                            variant="outline"
                             onClick={handleTogglePopover}
                             disabled={disabled}
                             role="combobox"
@@ -660,7 +662,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             aria-label={`Multi-select: ${selectedValues.length} of ${getAllOptions().length
                                 } options selected. ${placeholder}`}
                             className={cn(
-                                "flex p-1  rounded-xl border border-primary/90 min-h-10 h-auto items-center justify-between bg-primary/30 backdrop-blur-2xl hover:bg-primary/30 [&_svg]:pointer-events-auto",
+                                "flex h-auto min-h-10 items-center justify-between rounded-lg border-border bg-surface-subtle p-1 text-foreground shadow-xs transition-[color,box-shadow,background-color,border-color] hover:bg-surface-hover [&_svg]:pointer-events-auto",
                                 autoSize ? "w-auto" : "w-full",
                                 responsiveSettings.compactMode && "min-h-8 text-sm",
                                 screenSize === "mobile" && "min-h-12 text-base",
@@ -719,9 +721,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                             "text-xs px-1.5 py-0.5",
                                                             screenSize === "mobile" &&
                                                             "max-w-[120px] truncate",
-                                                            singleLine && "flex-shrink-0 whitespace-nowrap",
+                                                            singleLine && "shrink-0 whitespace-nowrap",
                                                             "[&>svg]:pointer-events-auto",
-                                                            "bg-primary text-white/80 hover:bg-primary "
+                                                            "bg-surface-active text-foreground border-border hover:bg-surface-selected"
                                                         )}
                                                         style={{
                                                             ...badgeStyle,
@@ -782,14 +784,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                         {selectedValues.length > responsiveSettings.maxCount && (
                                             <Badge
                                                 className={cn(
-                                                    "bg-transparent  text-foreground border-foreground/1 ",
+                                                    "text-foreground border-border",
                                                     getBadgeAnimationClass(),
                                                     multiSelectVariants({ variant }),
                                                     responsiveSettings.compactMode &&
                                                     "text-xs px-1.5 py-0.5",
-                                                    singleLine && "flex-shrink-0 whitespace-nowrap",
+                                                    singleLine && "shrink-0 whitespace-nowrap",
                                                     "[&>svg]:pointer-events-auto",
-                                                    "bg-yellow-500 hover:bg-yellow-500"
+                                                    "bg-surface-active hover:bg-surface-selected"
                                                 )}
                                                 style={{
                                                     animationDuration: `${animationConfig?.duration || animation
@@ -832,7 +834,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                         </div>
                                         <Separator
                                             orientation="vertical"
-                                            className="flex min-h-6 h-full bg-primary"
+                                            className="flex min-h-6 h-full bg-border"
                                         />
                                         <ChevronDown
                                             className="h-4 mx-2 cursor-pointer text-muted-foreground"
@@ -842,7 +844,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                 </div>
                             ) : (
                                 <div className="flex items-center justify-between w-full mx-auto">
-                                    <span className="text-sm text-muted mx-3">
+                                    <span className="text-sm text-muted-foreground mx-3">
                                         {placeholder}
                                     </span>
                                     <ChevronDown className="h-4 cursor-pointer text-muted-foreground mx-2" />
@@ -856,7 +858,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         aria-multiselectable="true"
                         aria-label="Available options"
                         className={cn(
-                            "w-auto p-0 bg-transparent rounded-2xl border-primary/80",
+                            "w-auto p-0 bg-popover rounded-2xl border border-border shadow-xl",
                             getPopoverAnimationClass(),
                             screenSize === "mobile" && "w-[85vw] max-w-[280px]",
                             screenSize === "tablet" && "w-[70vw] max-w-md",
@@ -896,7 +898,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                 )}>
 
                                 <CommandEmpty className="flex flex-col items-center space-y-2 justify-center py-2 text-center">
-                                    <div className="text-muted-foreground border-b w-full pb-2 border-primary">
+                                    <div className="text-muted-foreground border-b w-full pb-2 border-border">
                                         {emptyIndicator || "No result found"}
                                     </div>
 
@@ -928,7 +930,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                 </Button>
 
                                             </div>
-                                            <Separator orientation="vertical" className="bg-primary w-[2px] min-h-6" />
+                                            <Separator orientation="vertical" className="bg-border w-px min-h-6" />
                                             <div className="w-full">
 
                                                 <Button
@@ -969,7 +971,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                         <div className="py-2">
                                             <ToggleGroup
                                                 type="single"
-                                                className="w-full h-8 !rounded-2xl overflow-hidden"
+                                                className="w-full h-8 rounded-2xl! overflow-hidden"
                                                 value={selectedCategory || "SFW"}
                                                 onValueChange={(value) => {
                                                     if (value && setSelectedCategory) {
@@ -980,7 +982,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                 <ToggleGroupItem
                                                     value="SFW"
                                                     aria-label="SFW"
-                                                    className="w-1/2 bg-primary/30 cursor-pointer text-white data-[state=on]:bg-primary data-[state=on]:text-white hover:bg-primary/30 hover:text-white"
+                                                    className="w-1/2 cursor-pointer text-muted-foreground bg-surface-subtle data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-surface-hover hover:text-foreground"
                                                 >
                                                     SFW
                                                 </ToggleGroupItem>
@@ -988,7 +990,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                 <ToggleGroupItem
                                                     value="NSFW"
                                                     aria-label="NSFW"
-                                                    className="w-1/2 bg-primary/30 cursor-pointer text-white data-[state=on]:bg-primary data-[state=on]:text-white hover:bg-primary/30 hover:text-white"
+                                                    className="w-1/2 cursor-pointer text-muted-foreground bg-surface-subtle data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-surface-hover hover:text-foreground"
                                                 >
                                                     NSFW
                                                 </ToggleGroupItem>
@@ -1015,15 +1017,15 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                             className="cursor-pointer">
                                             <div
                                                 className={cn(
-                                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ",
+                                                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
                                                     selectedValues.length ===
                                                         getAllOptions().filter((opt) => !opt.disabled)
                                                             .length
-                                                        ? "bg-white/80"
-                                                        : "opacity-50 [&_svg]:invisible"
+                                                        ? "bg-primary border-primary"
+                                                        : "border-border opacity-50 [&_svg]:invisible"
                                                 )}
                                                 aria-hidden="true">
-                                                <CheckIcon className="h-4 w-4 text-primary" />
+                                                <CheckIcon className="h-4 w-4 text-primary-foreground" />
                                             </div>
                                             <span>
                                                 (Select All
@@ -1068,17 +1070,17 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                         disabled={option.disabled}>
                                                         <div
                                                             className={cn(
-                                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ",
+                                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
                                                                 isSelected
-                                                                    ? "bg-white/80 "
-                                                                    : "opacity-50 [&_svg]:invisible"
+                                                                    ? "bg-primary border-primary"
+                                                                    : "border-border opacity-50 [&_svg]:invisible"
                                                             )}
                                                             aria-hidden="true">
-                                                            <CheckIcon className="h-4 w-4 text-primary" />
+                                                            <CheckIcon className="h-4 w-4 text-primary-foreground" />
                                                         </div>
                                                         {option.icon && (
                                                             <option.icon
-                                                                className="mr-2 h-4 w-4 text-primary"
+                                                                className="mr-2 h-4 w-4 text-muted-foreground"
                                                                 aria-hidden="true"
                                                             />
                                                         )}
@@ -1094,7 +1096,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                             <div className="py-2">
                                                 <ToggleGroup
                                                     type="single"
-                                                    className="w-full h-8 !rounded-2xl overflow-hidden"
+                                                className="w-full h-8 rounded-2xl! overflow-hidden"
                                                     value={selectedCategory || "SFW"}
                                                     onValueChange={(value) => {
                                                         if (value && setSelectedCategory) {
@@ -1105,7 +1107,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                     <ToggleGroupItem
                                                         value="SFW"
                                                         aria-label="SFW"
-                                                        className="w-1/2 bg-primary/30 cursor-pointer text-white data-[state=on]:bg-primary data-[state=on]:text-white hover:bg-primary/60 hover:text-white"
+                                                    className="w-1/2 cursor-pointer text-muted-foreground bg-surface-subtle data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-surface-hover hover:text-foreground"
                                                     >
                                                         SFW
                                                     </ToggleGroupItem>
@@ -1113,7 +1115,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                     <ToggleGroupItem
                                                         value="NSFW"
                                                         aria-label="NSFW"
-                                                        className="w-1/2 bg-primary/30 cursor-pointer text-white data-[state=on]:bg-primary data-[state=on]:text-white hover:bg-primary/60 hover:text-white"
+                                                    className="w-1/2 cursor-pointer text-muted-foreground bg-surface-subtle data-[state=on]:bg-primary data-[state=on]:text-primary-foreground hover:bg-surface-hover hover:text-foreground"
                                                     >
                                                         NSFW
                                                     </ToggleGroupItem>
@@ -1147,17 +1149,17 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
                                                     <div
                                                         className={cn(
-                                                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ",
+                                                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
                                                             isSelected
-                                                                ? "bg-white/80"
-                                                                : "opacity-50 [&_svg]:invisible"
+                                                                ? "bg-primary border-primary"
+                                                                : "border-border opacity-50 [&_svg]:invisible"
                                                         )}
                                                         aria-hidden="true">
-                                                        <CheckIcon className="h-4 w-4 text-primary" />
+                                                        <CheckIcon className="h-4 w-4 text-primary-foreground" />
                                                     </div>
                                                     {option.icon && (
                                                         <option.icon
-                                                            className="mr-2 h-4 w-4 text-primary"
+                                                            className="mr-2 h-4 w-4 text-muted-foreground"
                                                             aria-hidden="true"
                                                         />
                                                     )}
@@ -1169,7 +1171,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                 )}
 
                             </CommandList>
-                            <CommandSeparator className="bg-primary" />
+                            <CommandSeparator className="bg-border" />
                             <CommandGroup>
                                 <div className="flex gap-x-1 items-center justify-between sticky bottom-0">
                                     {selectedValues.length > 0 && (
@@ -1189,7 +1191,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                             </CommandItem>
                                             <Separator
                                                 orientation="vertical"
-                                                className="flex min-h-6 h-full bg-primary"
+                                                className="flex min-h-6 h-full bg-border"
                                             />
                                         </>
                                     )}

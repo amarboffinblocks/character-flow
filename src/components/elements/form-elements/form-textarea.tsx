@@ -27,7 +27,7 @@ const FormTextarea: React.FC<FormTextareaProps> = ({
     const errorClasses = useMemo(
         () =>
             errorMessage
-                ? "border-destructive focus-visible:border-destructive bg-destructive/20"
+                ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive"
                 : "",
         [errorMessage]
     );
@@ -53,7 +53,7 @@ const FormTextarea: React.FC<FormTextareaProps> = ({
                 className={cn(errorClasses, className)}
             />
 
-            <div className="flex justify-between items-center text-xs px-1 text-white">
+            <div className="flex justify-between items-center text-xs px-1 text-muted-foreground ">
                 <span
                     id={`${name}-error`}
                     className={cn(

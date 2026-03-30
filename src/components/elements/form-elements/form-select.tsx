@@ -61,7 +61,10 @@ const FormSelect: React.FC<FormSelectProps> = ({
                 }}
 
             >
-                <SelectTrigger className={cn("w-full", className, meta.touched && meta.error && "border-red-500 bg-red-500/20")}>
+                <SelectTrigger
+                    aria-invalid={meta.touched && !!meta.error}
+                    className={cn("w-full", className)}
+                >
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
 

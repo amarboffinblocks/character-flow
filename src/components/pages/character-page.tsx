@@ -6,6 +6,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuSub,
@@ -24,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { DownloadIcon, Loader2, Menu, Plus, Trash2, TriangleAlert, UserRound } from "lucide-react";
 import Link from "next/link";
 import {
   Tabs,
@@ -39,10 +41,8 @@ import ErrorEmptyState from "../elements/error-empty-state";
 import SearchField from "../elements/search-field";
 import { ToggleSwitch } from "../elements/toggle-switch";
 import { extractCharacterCardMetadata } from "@/lib/utils/png-metadata";
-import Rating from "../elements/rating";
 import { useListCharacters, useDuplicateCharacter, useDeleteCharacter, useImportCharacter, useBulkImportCharacters, type CharacterListFilters } from "@/hooks";
 import GlobalLoader from "../elements/global-loader";
-import type { Character } from "@/lib/api/characters";
 import MultiSelectFilter from "../elements/multi-select-filter";
 import ImportCharacterDialog from "../elements/import-character-dialog";
 import { toast } from "sonner";
@@ -79,9 +79,11 @@ const SORT_OPTIONS = [
     sortBy: "createdAt",
     sortOrder: "desc" as const,
   },
-];
-
-const RATINGS = [5, 4, 3, 2, 1];
+] satisfies Array<{
+  label: string;
+  sortBy: "createdAt" | "updatedAt" | "name" | "chatCount";
+  sortOrder: "asc" | "desc";
+}>;
 
 const CharacterPage = () => {
   const queryClient = useQueryClient();
@@ -319,13 +321,13 @@ const CharacterPage = () => {
               }
             }
           } else if (file.type === "application/json") {
-            return new Promise<{ name: string, content: any }>((resolve) => {
+            return new Promise<{ name: string; content: unknown }>((resolve) => {
               const reader = new FileReader();
               reader.onload = (e) => {
                 try {
                   const json = JSON.parse(e.target?.result as string);
                   resolve({ name: file.name, content: json });
-                } catch (err) {
+                } catch {
                   resolve({ name: file.name, content: null });
                 }
               };
@@ -340,7 +342,7 @@ const CharacterPage = () => {
       });
 
       const results = await Promise.all(filePromises);
-      const mergedCharacters: any[] = [];
+      const mergedCharacters: Record<string, unknown>[] = [];
       let ignoredFiles = 0;
 
       // 2. Filter and merge
@@ -350,9 +352,9 @@ const CharacterPage = () => {
         if (Array.isArray(result.content)) {
           // Ignore files that are already arrays (per user request)
           ignoredFiles++;
-        } else if (typeof result.content === 'object') {
+        } else if (typeof result.content === "object") {
           // Add single character object
-          mergedCharacters.push(result.content);
+          mergedCharacters.push(result.content as Record<string, unknown>);
         }
       });
 
@@ -431,201 +433,210 @@ const CharacterPage = () => {
   const skeletonCount = pagination?.limit || 20;
 
   return (
-    <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative  ">
+    <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative py-6">
       <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
-      {/* Fixed Header Section */}
-      <div className="flex-none p-4 pb-0 z-10 ">
-        <div className="max-w-3xl w-full mx-auto space-y-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-x-4 w-full">
-            <SearchField
-              placeholder="Search by Character name or description"
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onDebouncedChange={handleDebouncedSearch}
-              debounceMs={500}
-            />
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="rounded-full shrink-0">
-                  Character Menu <Menu className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-72" align="end">
-                <DropdownMenuGroup>
-                  {/* <DropdownMenuItem>Show Favorites only</DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Set Default View</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuItem>All Characters</DropdownMenuItem>
-                        <DropdownMenuItem>Public Characters</DropdownMenuItem>
-                        <DropdownMenuItem>Saved Characters</DropdownMenuItem>
-                        <DropdownMenuItem>Private Characters</DropdownMenuItem>
-                        <DropdownMenuItem>Favourite Characters</DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub> */}
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Alphabetical Order</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {SORT_OPTIONS.slice(0, 2).map((option: any) => (
-                          <DropdownMenuItem
-                            key={option.label}
-                            onClick={() => handleSort(option.sortBy, option.sortOrder)}
-                          >
-                            {option.label}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Date Order</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {SORT_OPTIONS.slice(2).map(option => (
-                          <DropdownMenuItem
-                            key={option.label}
-                            onClick={() => handleSort(option.sortBy as "createdAt" | "updatedAt" | "name" | "chatCount", option.sortOrder)}
-                          >
-                            {option.label}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>By Rating</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent className="text-white">
-                        {RATINGS.map((star) => (
-                          <DropdownMenuItem key={star}>
-                            <div className="flex items-center gap-2">
-                              <Rating value={star} size={14} readOnly />
-                              <span className="text-xs">({star} Star)</span>
-                            </div>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-
-                  <DropdownMenuItem
-                    onClick={handleDuplicateSelected}
-                    disabled={selectedCharacters.size === 0 || isDuplicating}
-                  >
-                    {isDuplicating
-                      ? `Duplicating ${selectedCharacters.size} character(s)...`
-                      : `Duplicate Selected Character(s) (${selectedCharacters.size})`}
-                  </DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Create / Import</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        <Link href="/characters/create" >
-                          <DropdownMenuItem >Create Character</DropdownMenuItem>
-                        </Link>
-                        <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
-                          Import Character
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setBulkImportDialogOpen(true)}>
-                          Bulk Import Characters
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Delete Character</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteClick("only")}
-                          disabled={selectedCharacters.size === 0 || isDeleting}
-                        >
-                          Delete selected Character(s) only
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteClick("with-current-chat")}
-                          // disabled={selectedCharacters.size === 0 || isDeleting}
-                          disabled
-                        >
-                          Delete selected Character(s) and current chat
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteClick("with-all-chats")}
-                          // disabled={selectedCharacters.size === 0 || isDeleting}
-                          disabled
-                        >
-                          Delete selected Character(s), saved chat and current chat
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Tags & Rating Filter */}
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 w-full">
-            <div className="flex flex-col lg:flex-row flex-1 gap-3 lg:gap-x-4 w-full">
-              <div className="w-full lg:w-1/2 min-w-0">
-                <MultiSelectFilter
-                  placeholder="Search by Character tags"
-                  value={includeTags}
-                  onChange={handleIncludeTagsChange}
-                  defaultCategory={ratingFilter || "SFW"}
-                  className="rounded-full"
-                />
-              </div>
-              <div className="w-full lg:w-1/2 min-w-0">
-                <MultiSelectFilter
-                  placeholder="Tags to exclude from search"
-                  value={excludeTags}
-                  onChange={handleExcludeTagsChange}
-                  defaultCategory={ratingFilter || "SFW"}
-                  className="rounded-full"
-                />
-              </div>
+      <div className="sticky top-0 z-30 bg-background pt-2 pb-3 mb-3">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">Characters</h1>
+              <p className="text-sm text-muted-foreground">
+                Discover, organize, and manage character cards with consistent filters and actions.
+              </p>
             </div>
-            <div className="shrink-0 w-full sm:w-auto">
-              <ToggleSwitch
-                options={[
-                  { label: "NSFW", value: "NSFW" },
-                  { label: "SFW", value: "SFW" },
-                ]}
-                defaultValue={ratingFilter || "SFW"}
-                onChange={handleRatingChange}
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              <Link href="/characters/create">
+                <Button className="rounded-full gap-2">
+                  <Plus className="size-4" />
+                  Create Character
+                </Button>
+              </Link>
+              <Button
+                variant="secondary"
+                className="rounded-full gap-2"
+                onClick={() => setImportDialogOpen(true)}
+              >
+                <UserRound className="size-4" />
+                Import
+              </Button>
+              <Button
+                variant="secondary"
+                className="rounded-full gap-2"
+                onClick={() => setBulkImportDialogOpen(true)}
+              >
+                <DownloadIcon className="size-4 rotate-180" />
+                Bulk Import
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="rounded-full shrink-0" variant="outline">
+                    Character Actions <Menu className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-72" align="end">
+                  <DropdownMenuLabel>Batch Actions</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>Sort: Name</DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          {SORT_OPTIONS.slice(0, 2).map((option) => (
+                            <DropdownMenuItem
+                              key={option.label}
+                              onClick={() => handleSort(option.sortBy, option.sortOrder)}
+                            >
+                              {option.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>Sort: Date</DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          {SORT_OPTIONS.slice(2).map((option) => (
+                            <DropdownMenuItem
+                              key={option.label}
+                              onClick={() => handleSort(option.sortBy, option.sortOrder)}
+                            >
+                              {option.label}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleDuplicateSelected}
+                      disabled={selectedCharacters.size === 0 || isDuplicating}
+                    >
+                      {isDuplicating
+                        ? `Duplicating ${selectedCharacters.size} character(s)...`
+                        : `Duplicate Selected (${selectedCharacters.size})`}
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>Create / Import</DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <Link href="/characters/create">
+                            <DropdownMenuItem>Create Character</DropdownMenuItem>
+                          </Link>
+                          <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
+                            Import Character
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setBulkImportDialogOpen(true)}>
+                            Bulk Import Characters
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>Delete Character</DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteClick("only")}
+                            disabled={selectedCharacters.size === 0 || isDeleting}
+                          >
+                            Delete selected Character(s) only
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteClick("with-current-chat")}
+                            disabled
+                          >
+                            Delete selected Character(s) and current chat
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteClick("with-all-chats")}
+                            disabled
+                          >
+                            Delete selected Character(s), saved chat and current chat
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Scrollable Content Section - content + pagination scroll together */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+      <div className="mb-4 space-y-3">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="min-w-0">
+            <SearchField
+              placeholder="Search by character name or description"
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onDebouncedChange={handleDebouncedSearch}
+              debounceMs={500}
+              className="bg-surface-base"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <ToggleSwitch
+              options={[
+                { label: "NSFW", value: "NSFW" },
+                { label: "SFW", value: "SFW" },
+              ]}
+              defaultValue={ratingFilter || "SFW"}
+              onChange={handleRatingChange}
+              className="bg-surface-base"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="min-w-0">
+            <MultiSelectFilter
+              placeholder="Include tags"
+              value={includeTags}
+              onChange={handleIncludeTagsChange}
+              defaultCategory={ratingFilter || "SFW"}
+              className="rounded-full bg-surface-base border-border"
+            />
+          </div>
+          <div className="min-w-0">
+            <MultiSelectFilter
+              placeholder="Exclude tags"
+              value={excludeTags}
+              onChange={handleExcludeTagsChange}
+              defaultCategory={ratingFilter || "SFW"}
+              className="rounded-full bg-surface-base border-border"
+            />
+          </div>
+        </div>
+
+        <div className="text-xs text-muted-foreground">
+          {selectedCharacters.size > 0
+            ? `${selectedCharacters.size} selected`
+            : "Select cards to apply batch actions"}
+        </div>
+      </div>
+      <div className="flex-1 min-h-0 flex flex-col">
         <Tabs
           value={activeTab}
           onValueChange={onTabChange}
           className="flex flex-col min-h-0 flex-1"
         >
-          <div className=" py-3 pt-5 sticky top-0 z-10 w-full overflow-x-auto">
-            <TabsList className="w-full min-w-max bg-primary/20 flex-nowrap justify-start sm:justify-center">
+          <div className="sticky top-24 z-20 bg-background py-2 mb-3">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-5">
               {TABS.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value} className="whitespace-nowrap shrink-0">
+                <TabsTrigger key={tab.value} value={tab.value} className="whitespace-nowrap">
                   {tab.label}
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
-          <TabsContent value={activeTab} className="py-2 px-3 sm:px-4 flex-1 min-h-0 mt-0">
+          <TabsContent value={activeTab} className="py-1 px-0 flex-1 min-h-0 mt-0">
 
             {isLoading && (!characters || characters.length === 0) ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2  gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {Array.from({ length: skeletonCount }).map((_, index) => (
                   <CharacterCardSkeleton key={`skeleton-${index}`} />
                 ))}
@@ -642,11 +653,11 @@ const CharacterPage = () => {
               <ErrorEmptyState
                 type="empty"
                 title="No Characters Found"
-                description="We couldn't find any characters matching your criteria. Try adjusting your filters or search query."
+                description="No character matches the current filters. Try changing search, tags, rating, or active tab."
               />
             ) : (
               <div
-                className="grid grid-cols-1  lg:grid-cols-2 xl:grid-cols-2 gap-4 transition-opacity duration-300"
+                className="grid grid-cols-1 lg:grid-cols-2 gap-4 transition-opacity duration-300"
                 style={{ opacity: isLoading ? 0.5 : 1 }}
               >
                 {characters.map((character) => (
@@ -671,9 +682,8 @@ const CharacterPage = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Pagination - inside scrollable area, always visible when scrolling down */}
         {!isLoading && !isError && pagination && totalPages && totalPages > 1 && (
-          <div className="py-4 sm:py-6 px-2 flex justify-center">
+          <div className="mt-6 pt-4 border-t border-border flex justify-center">
             <PaginationComponent
               currentPage={page}
               totalPages={totalPages}
@@ -683,15 +693,18 @@ const CharacterPage = () => {
         )}
       </div>
 
-      {/* Fixed Footer */}
       <div className="flex-none mt-auto">
         <Footer />
       </div>
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-primary/30 backdrop-blur-sm border-primary">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Delete Character(s)?</AlertDialogTitle>
+        <AlertDialogContent className="bg-popover border-border rounded-3xl p-0 gap-0 overflow-hidden shadow-xl sm:max-w-md">
+          <AlertDialogHeader className="px-6 pt-8 pb-6 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="flex size-14 items-center justify-center rounded-full bg-surface-active border-2 border-border">
+                <TriangleAlert className="size-7 text-warning" aria-hidden />
+              </div>
+            </div>
+            <AlertDialogTitle className="text-xl font-semibold text-center leading-tight">Delete Character(s)?</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedCharacters.size === 1 ? (
                 <>
@@ -714,14 +727,29 @@ const CharacterPage = () => {
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="px-6 py-4 bg-surface-subtle border-t border-border gap-3 justify-center flex-wrap">
+            <AlertDialogCancel
+              disabled={isDeleting}
+              className="rounded-full border-border hover:bg-surface-hover text-foreground flex-1 sm:flex-initial"
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-danger border-0 flex-1 sm:flex-initial"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
