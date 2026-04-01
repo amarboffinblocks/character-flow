@@ -30,8 +30,8 @@ export const createCharacter = async (
     throw new Error("No access token available");
   }
 
-  // Check if we have file uploads (avatar or backgroundImage as File objects)
-  const hasFiles = data.avatar instanceof File || data.backgroundImage instanceof File;
+  // Check if we have file uploads
+  const hasFiles = data.avatar instanceof File;
 
   if (hasFiles) {
     // Use FormData for multipart/form-data
@@ -118,13 +118,6 @@ export const createCharacter = async (
       formData.append("avatar", data.avatar);
     }
 
-    if (data.backgroundImage instanceof File) {
-      formData.append("backgroundImage", data.backgroundImage);
-    } else if (typeof data.backgroundImage === "string") {
-      // If backgroundImage is a URL string, send it as is
-      formData.append("backgroundImage", data.backgroundImage);
-    }
-
     const response = await apiClient.post<ApiResponse<CreateCharacterResponse>>(
       "/api/v1/characters",
       formData,
@@ -158,12 +151,9 @@ export const createCharacter = async (
       realmId: data.realmId,
     };
 
-    // Only include avatar/backgroundImage if they're strings (URLs)
+    // Only include avatar if it's a string (URL)
     if (typeof data.avatar === "string") {
       jsonData.avatar = data.avatar;
-    }
-    if (typeof data.backgroundImage === "string") {
-      jsonData.backgroundImage = data.backgroundImage;
     }
 
     const response = await apiClient.post<ApiResponse<CreateCharacterResponse>>(
@@ -341,9 +331,6 @@ export const duplicateCharacter = async (
   if (character.avatar?.url) {
     duplicateData.avatar = character.avatar.url;
   }
-  if (character.backgroundImg?.url) {
-    duplicateData.backgroundImage = character.backgroundImg.url;
-  }
 
   // Create the duplicate character
   return createCharacter(duplicateData);
@@ -476,7 +463,7 @@ export const updateCharacter = async (
     throw new Error("Invalid character ID format");
   }
 
-  const hasFiles = data.avatar instanceof File || data.backgroundImage instanceof File;
+  const hasFiles = data.avatar instanceof File;
 
   if (hasFiles) {
     // Use FormData for multipart/form-data
@@ -562,12 +549,6 @@ export const updateCharacter = async (
       formData.append("avatar", data.avatar);
     }
 
-    if (data.backgroundImage instanceof File) {
-      formData.append("backgroundImage", data.backgroundImage);
-    } else if (typeof data.backgroundImage === "string") {
-      formData.append("backgroundImage", data.backgroundImage);
-    }
-
     const response = await apiClient.put<ApiResponse<UpdateCharacterResponse>>(
       `/api/v1/characters/${characterId}`,
       formData,
@@ -601,12 +582,9 @@ export const updateCharacter = async (
       realmId: data.realmId,
     };
 
-    // Only include avatar/backgroundImage if they're strings (URLs)
+    // Only include avatar if it's a string (URL)
     if (typeof data.avatar === "string") {
       jsonData.avatar = data.avatar;
-    }
-    if (typeof data.backgroundImage === "string") {
-      jsonData.backgroundImage = data.backgroundImage;
     }
 
     const response = await apiClient.put<ApiResponse<UpdateCharacterResponse>>(

@@ -1,8 +1,5 @@
-import ForgotPasswordForm from "@/components/forms/forgot-password-form";
+import { redirect } from "next/navigation";
 
-const ForgotPasswordPage = () => {
-    return <ForgotPasswordForm />;
-};
-
-export default ForgotPasswordPage;
-
+export default function ForgotPasswordPage() {
+  redirect("/sign-in");
+}

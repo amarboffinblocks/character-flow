@@ -15,6 +15,30 @@ import { deleteRealmChatMessage } from "@/lib/api/realms/realm-chats";
 import { toast } from "sonner";
 
 const HISTORY_LIMIT = 100;
+const GENERIC_TITLES = new Set(["new chat", "untitled", "untitled chat", "chat", "new conversation"]);
+
+function normalizeWhitespace(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function isMeaningfulTitle(title: string | null | undefined): boolean {
+  if (!title) return false;
+  const normalized = normalizeWhitespace(title).toLowerCase();
+  return normalized.length > 0 && !GENERIC_TITLES.has(normalized);
+}
+
+function buildTitleFromInput(input: string): string | null {
+  const normalized = normalizeWhitespace(input)
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .replace(/\s*[?.!,;:]+\s*$/g, "");
+  if (!normalized) return null;
+  if (normalized.length < 4) return null;
+  if (!/[a-z0-9]/i.test(normalized)) return null;
+  const words = normalized.split(" ").filter(Boolean).slice(0, 10);
+  if (words.length === 0) return null;
+  const joined = words.join(" ");
+  return joined.length > 70 ? `${joined.slice(0, 69).trimEnd()}…` : joined;
+}
 
 export interface UseRealmAIChatOptions {
   realmId: string | undefined;
@@ -66,8 +90,13 @@ export function useRealmAIChat(options: UseRealmAIChatOptions) {
   useEffect(() => {
     const prev = prevStatusRef.current;
     prevStatusRef.current = chat.status;
-    if (prev === "streaming" && chat.status === "ready" && chatId && realmId) {
+    const hasJustFinishedRequest =
+      chat.status === "ready" && (prev === "streaming" || prev === "submitted");
+    if (hasJustFinishedRequest && chatId && realmId) {
       queryClient.invalidateQueries({ queryKey: queryKeys.realms.realmChatMessages(realmId, chatId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.realms.realmChatDetail(realmId, chatId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.realms.chats(realmId) });
+      queryClient.refetchQueries({ queryKey: queryKeys.realms.chats(realmId), type: "active" });
     }
   }, [chat.status, chatId, realmId, queryClient]);
 
@@ -76,12 +105,38 @@ export function useRealmAIChat(options: UseRealmAIChatOptions) {
       const hasText = Boolean(message.text?.trim());
       const hasFiles = Boolean(message.files?.length);
       if (!chatId || (!hasText && !hasFiles)) return;
+
+      const optimisticTitle = hasText ? buildTitleFromInput(message.text?.trim() || "") : null;
+      if (optimisticTitle && realmId) {
+        queryClient.setQueriesData<{ chat?: { id?: string; title?: string | null } }>(
+          { queryKey: queryKeys.realms.realmChatDetail(realmId, chatId) },
+          (old) => {
+            if (!old?.chat || isMeaningfulTitle(old.chat.title)) return old;
+            return { ...old, chat: { ...old.chat, title: optimisticTitle } };
+          }
+        );
+        queryClient.setQueriesData<{ chats?: Array<{ id: string; title?: string | null }> }>(
+          { queryKey: queryKeys.realms.chats(realmId) },
+          (old) => {
+            if (!old?.chats) return old;
+            return {
+              ...old,
+              chats: old.chats.map((chatItem) =>
+                chatItem.id === chatId && !isMeaningfulTitle(chatItem.title)
+                  ? { ...chatItem, title: optimisticTitle }
+                  : chatItem
+              ),
+            };
+          }
+        );
+      }
+
       chat.sendMessage({
         text: message.text?.trim() || "",
         files: message.files?.length ? message.files : undefined,
       });
     },
-    [chatId, chat.sendMessage]
+    [chatId, realmId, chat.sendMessage, queryClient]
   );
 
   const reload = useCallback(() => {

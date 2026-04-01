@@ -941,7 +941,7 @@ export const PromptInputFooter = ({
 }: PromptInputFooterProps) => (
   <InputGroupAddon
     align="block-end"
-    className={cn("justify-between gap-1 backdrop-blur-sm", className)}
+    className={cn("justify-between gap-1 ", className)}
     {...props}
   />
 );

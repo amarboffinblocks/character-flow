@@ -209,10 +209,10 @@ const ChatPanel = ({
   }, [stopProp]);
 
   return (
-    <div className=" sticky bottom-0 ">
+    <div className=" sticky bottom-4 ">
       <PromptInputProvider>
         <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-          <PromptInputHeader className=" bg-primary/10 ">
+          <PromptInputHeader className=" ">
             <PromptInputAttachmentsDisplay />
           </PromptInputHeader>
           <PromptInputBody>

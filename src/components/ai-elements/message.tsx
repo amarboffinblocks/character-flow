@@ -48,8 +48,8 @@ export const MessageContent = ({
   <div
     className={cn(
       "is-user:dark  flex w-fit max-w-full min-w-0 flex-col gap-2 overflow-hidden text-sm",
-      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-primary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-white",
-      "group-[.is-assistant]:text-muted-foreground group-[.is-assistant]:bg-primary/30 group-[.is-assistant]:px-4 group-[.is-assistant]:py-3 group-[.is-assistant]:rounded-lg group-[.is-assistant]:backdrop-blur-sm",
+      "group-[.is-user]:ml-auto group-[.is-user]:rounded-lg group-[.is-user]:bg-accent-hover group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-white",
+      "group-[.is-assistant]:text-muted-foreground group-[.is-assistant]:bg-accent-hover/50 group-[.is-assistant]:px-4 group-[.is-assistant]:py-3 group-[.is-assistant]:rounded-lg ",
       className
     )}
     {...props}
@@ -85,7 +85,7 @@ export const MessageAction = ({
   ...props
 }: MessageActionProps) => {
   const button = (
-    <Button size={size} type="button" variant={variant} className={cn("bg-primary/30 text-white rounded-lg", className)} {...props}>
+    <Button size={size} type="button" variant={variant} className={cn(" text-white rounded-lg", className)} {...props}>
       {children}
       <span className="sr-only">{label || tooltip}</span>
     </Button>
@@ -253,7 +253,6 @@ export const MessageBranchPrevious = ({
       size="icon-sm"
       type="button"
       variant="ghost"
-      className="bg-primary/30 text-white backdrop-blur-md rounded-lg"
       {...props}
     >
       {children ?? <ChevronLeftIcon size={14} />}
@@ -278,7 +277,6 @@ export const MessageBranchNext = ({
       size="icon-sm"
       type="button"
       variant="ghost"
-      className="bg-primary/30 text-white rounded-lg backdrop-blur-md"
       {...props}
     >
       {children ?? <ChevronRightIcon size={14} />}

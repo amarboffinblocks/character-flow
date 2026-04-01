@@ -1,23 +1,18 @@
-/**
- * useLogin Hook
- * Custom hook for user login (Step 1: Request OTP) with TanStack Query
- */
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { loginUser } from "@/lib/api/auth";
 import { queryKeys } from "@/lib/api/shared/query-keys";
-import type { LoginRequest, LoginResponse } from "@/lib/api/auth";
+import { storeTokens } from "@/lib/utils/token-storage";
 import type { ApiError } from "@/lib/api/shared/types";
 
 interface UseLoginOptions {
-  onSuccess?: (data: LoginResponse) => void;
+  onSuccess?: () => void;
   onError?: (error: ApiError) => void;
   showToasts?: boolean;
   redirectOnSuccess?: boolean;
-  redirectPath?: string;
 }
 
 export const useLogin = (options: UseLoginOptions = {}) => {
@@ -26,92 +21,42 @@ export const useLogin = (options: UseLoginOptions = {}) => {
     onError: onErrorCallback,
     showToasts = true,
     redirectOnSuccess = true,
-    redirectPath = "/verify/otp",
   } = options;
 
   const queryClient = useQueryClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const mutation = useMutation({
-    mutationFn: async (data: LoginRequest) => {
-      return await loginUser(data);
-    },
-
+    mutationFn: async () => loginUser(),
     retry: (failureCount, error) => {
-      // Don't retry on 4xx errors (client errors)
-      if ((error as ApiError).statusCode && (error as ApiError).statusCode! >= 400 && (error as ApiError).statusCode! < 500) {
-        return false;
-      }
-      // Retry up to 2 times for network/server errors
+      const err = error as ApiError;
+      if (err.statusCode && err.statusCode >= 400 && err.statusCode < 500) return false;
       return failureCount < 2;
     },
-
-    retryDelay: (attemptIndex) => {
-      return Math.min(1000 * 2 ** attemptIndex, 3000);
-    },
-
-    onSuccess: (response) => {
-      const { data } = response;
-
-      // Store userId in sessionStorage for OTP verification
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("loginUserId", data.userId);
-        sessionStorage.setItem("verificationMethod", data.verificationMethod);
-      }
-
-      // Invalidate auth queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
-
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
+    onSuccess: () => {
+      storeTokens({ accessToken: "open-access", refreshToken: "" });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.current() });
       if (showToasts) {
-        const method = data.verificationMethod === "email" ? "email" : "phone";
-        toast.success("OTP Sent", {
-          description: `We've sent a verification code to your ${method}. Please check and enter the code.`,
-          duration: 5000,
-        });
+        toast.success("Welcome", { description: "You're in.", duration: 3000 });
       }
-
-      if (onSuccessCallback) {
-        onSuccessCallback(data);
-      }
-
+      onSuccessCallback?.();
       if (redirectOnSuccess) {
-        // Pass userId as query param
-        setTimeout(() => {
-          router.push(`${redirectPath}/${data.userId}`);
-        }, 1000);
+        const next = searchParams.get("redirect");
+        router.replace(next && next.startsWith("/") ? next : "/dashboard");
       }
     },
-
     onError: (error: ApiError) => {
-      const errorMessage =
-        error.message ||
-        error.error ||
-        "Login failed. Please check your credentials and try again.";
-
-      if (showToasts) {
-        toast.error("Login Failed", {
-          description: errorMessage,
-          duration: 5000,
-        });
-      }
-
-      if (onErrorCallback) {
-        onErrorCallback(error);
-      }
+      const msg = error.message || error.error || "Could not enter the app.";
+      if (showToasts) toast.error("Something went wrong", { description: msg });
+      onErrorCallback?.(error);
     },
   });
 
-  const login = (data: LoginRequest) => {
-    return mutation.mutate(data);
-  };
-
-  const loginAsync = (data: LoginRequest) => {
-    return mutation.mutateAsync(data);
-  };
-
   return {
-    login,
-    loginAsync,
+    login: () => mutation.mutate(),
+    loginAsync: () => mutation.mutateAsync(),
     status: mutation.status,
     isLoading: mutation.isPending,
     isSuccess: mutation.isSuccess,
@@ -121,4 +66,3 @@ export const useLogin = (options: UseLoginOptions = {}) => {
     reset: mutation.reset,
   };
 };
-

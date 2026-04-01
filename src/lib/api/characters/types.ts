@@ -37,7 +37,6 @@ export interface CreateCharacterRequest {
   realmId?: string | null;
   favourite?: boolean;
   avatar?: File | string;
-  backgroundImage?: File | string;
   tokens?: number;
 }
 
@@ -64,7 +63,6 @@ export interface UpdateCharacterRequest {
   realmId?: string | null;
   favourite?: boolean;
   avatar?: File | string;
-  backgroundImage?: File | string;
   tokens?: number;
 }
 

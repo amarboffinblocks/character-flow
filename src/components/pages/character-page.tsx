@@ -436,7 +436,7 @@ const CharacterPage = () => {
     <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative py-6">
       <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
-      <div className="sticky top-0 z-30 bg-background pt-2 pb-3 mb-3">
+      <div className="sticky top-0 z-30 pt-2 pb-3 mb-3">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-1">
@@ -624,7 +624,7 @@ const CharacterPage = () => {
           onValueChange={onTabChange}
           className="flex flex-col min-h-0 flex-1"
         >
-          <div className="sticky top-24 z-20 bg-background py-2 mb-3">
+          <div className="sticky top-24 z-20  mb-3">
             <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-5">
               {TABS.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} className="whitespace-nowrap">

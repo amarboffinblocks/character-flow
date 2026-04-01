@@ -9,7 +9,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { updateProfile } from "@/lib/api/user";
 import { queryKeys } from "@/lib/api/shared/query-keys";
-import { getAccessToken } from "@/lib/utils/token-storage";
 import type { UpdateProfileRequest, UpdateProfileResponse } from "@/lib/api/user";
 import type { ApiError } from "@/lib/api/shared/types";
 
@@ -29,13 +28,7 @@ export const useUpdateProfile = (options: UseUpdateProfileOptions = {}) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (data: UpdateProfileRequest) => {
-      const accessToken = getAccessToken();
-      if (!accessToken) {
-        throw new Error("No access token available");
-      }
-      return await updateProfile(data, accessToken);
-    },
+    mutationFn: async (data: UpdateProfileRequest) => updateProfile(data),
 
     retry: false,
 

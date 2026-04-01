@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
-import { MessageSquare, Folder, Sparkles, UserCircle2, Palette, BookOpenText, Users, ChevronUp, ChevronRight, PanelLeft, Settings, Plus, MoreHorizontal } from "lucide-react";
+import { MessageSquare, Folder, Sparkles, UserCircle2, Palette, BookOpenText, Users, ChevronUp, ChevronRight, PanelLeft, Settings, Plus, MoreHorizontal, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCreateFolder, useDeleteChat, useDeleteFolder, useListChats, useListFolders, useUpdateChat, useUpdateFolder } from "@/hooks";
+import { useGetModels } from "@/hooks/models";
 import { useListRealms } from "@/hooks/realm";
 import { useCurrentUser } from "@/hooks/user/use-current-user";
+import { useLogout } from "@/hooks/auth";
 import { listChats, type Chat } from "@/lib/api/chats";
 import { listRealmChats } from "@/lib/api/realms";
 import { queryKeys } from "@/lib/api/shared/query-keys";
@@ -18,10 +20,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FolderModal } from "@/components/modals/create-folder-modal";
 import { updateRealm, deleteRealm } from "@/lib/api/realms/endpoints";
+import { updateModel, type ModelConfig } from "@/lib/api/models";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +43,68 @@ interface AppSidebarProps {
 }
 
 const FOLDER_ID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+const DEFAULT_MODEL_CONFIG: ModelConfig = {
+  maxTokens: 512,
+  temperature: 0.7,
+  topP: 0.9,
+  frequencyPenalty: 0.4,
+  presencePenalty: 0.2,
+};
+const MODEL_TUNING_FIELDS: Array<{
+  key: keyof ModelConfig;
+  label: string;
+  hint: string;
+  min: number;
+  max: number;
+  step: number;
+  decimals: number;
+}> = [
+    {
+      key: "maxTokens",
+      label: "Max Tokens",
+      hint: "Maximum tokens generated per response.",
+      min: 1,
+      max: 4096,
+      step: 1,
+      decimals: 0,
+    },
+    {
+      key: "temperature",
+      label: "Temperature",
+      hint: "Higher values increase creativity and variability.",
+      min: 0,
+      max: 2,
+      step: 0.1,
+      decimals: 1,
+    },
+    {
+      key: "topP",
+      label: "Top P",
+      hint: "Controls nucleus sampling diversity.",
+      min: 0,
+      max: 1,
+      step: 0.05,
+      decimals: 2,
+    },
+    {
+      key: "frequencyPenalty",
+      label: "Frequency Penalty",
+      hint: "Reduces repetitive word usage.",
+      min: 0,
+      max: 2,
+      step: 0.1,
+      decimals: 1,
+    },
+    {
+      key: "presencePenalty",
+      label: "Presence Penalty",
+      hint: "Encourages introducing new topics.",
+      min: 0,
+      max: 2,
+      step: 0.1,
+      decimals: 1,
+    },
+  ];
 
 function toFolderSlug(folder: FolderType): string {
   return `${folder.id}-${folder.name.toLowerCase().trim().replace(/\s+/g, "-")}`;
@@ -56,8 +122,20 @@ function chatLabel(chat: Chat): string {
   return "New chat";
 }
 
+function chatAvatarFallback(chat: Chat): string {
+  const characterName = chat.character?.name?.trim();
+  if (characterName) return characterName.charAt(0).toUpperCase();
+  return "C";
+}
+
 export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProps) {
   const pathname = usePathname();
+  const folderChatMatch = pathname?.match(/^\/folders\/([^/]+)\/c\/([^/]+)/);
+  const activeFolderId = getFolderIdFromParam(folderChatMatch?.[1]);
+  const isOnFolderChatPage = Boolean(activeFolderId);
+  const realmChatMatch = pathname?.match(/^\/realms\/([^/]+)\/chat\/([^/]+)/);
+  const activeRealmId = realmChatMatch?.[1];
+  const isOnRealmChatPage = Boolean(activeRealmId);
   const [realmsOpen, setRealmsOpen] = useState(true);
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [chatsOpen, setChatsOpen] = useState(true);
@@ -69,8 +147,13 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
   const [chatToRename, setChatToRename] = useState<Chat | null>(null);
   const [chatRenameTitle, setChatRenameTitle] = useState("");
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState("");
+  const [draftConfig, setDraftConfig] = useState<ModelConfig>(DEFAULT_MODEL_CONFIG);
   const { user } = useCurrentUser();
+  const { logout, isLoading: isLoggingOut } = useLogout({ showToasts: true, redirectOnSuccess: true });
   const queryClient = useQueryClient();
+  const { models } = useGetModels();
   const { chats, isLoading: chatsLoading } = useListChats({
     filters: { sortBy: "updatedAt", sortOrder: "desc", page: 1, limit: 25 },
   });
@@ -123,6 +206,16 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
     },
     onError: (error: Error) => toast.error(error.message || "Failed to delete realm"),
   });
+  const saveModelTuningMutation = useMutation({
+    mutationFn: async ({ modelId, config }: { modelId: string; config: ModelConfig }) =>
+      updateModel(modelId, { config }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.models.all });
+      toast.success("Model tuning settings saved");
+      setSettingsOpen(false);
+    },
+    onError: (error: Error) => toast.error(error.message || "Failed to save model tuning settings"),
+  });
 
   const folderChatsQueries = useQueries({
     queries: folders.map((folder) => ({
@@ -132,6 +225,7 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
         return res.data.chats;
       },
       staleTime: 60 * 1000,
+      enabled: isOnFolderChatPage && folder.id === activeFolderId,
     })),
   });
 
@@ -143,12 +237,42 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
         return res.data.chats;
       },
       staleTime: 60 * 1000,
+      enabled: isOnRealmChatPage && realm.id === activeRealmId,
     })),
   });
 
   const topLevelChats = useMemo(
     () => chats.filter((chat) => !chat.folderId && !chat.realmId && !!chat.characterId).slice(0, 10),
     [chats]
+  );
+  const selectedModel = useMemo(
+    () => models.find((m) => m.id === selectedModelId) ?? null,
+    [models, selectedModelId]
+  );
+
+  useEffect(() => {
+    if (!settingsOpen || models.length === 0) return;
+    if (!selectedModelId) {
+      const preferred = models.find((m) => m.isDefault)?.id ?? models[0]?.id ?? "";
+      if (preferred) setSelectedModelId(preferred);
+    }
+  }, [models, selectedModelId, settingsOpen]);
+
+  useEffect(() => {
+    if (!selectedModel) return;
+    setDraftConfig(selectedModel.config ?? DEFAULT_MODEL_CONFIG);
+  }, [selectedModel]);
+
+  const handleConfigChange = useCallback(
+    (key: keyof ModelConfig, bounds: { min: number; max: number }, rawValue: string) => {
+      const parsed = Number(rawValue);
+      const next =
+        Number.isFinite(parsed) && !Number.isNaN(parsed)
+          ? Math.min(bounds.max, Math.max(bounds.min, parsed))
+          : bounds.min;
+      setDraftConfig((prev) => ({ ...prev, [key]: next }));
+    },
+    []
   );
 
   const accountInitial = (user?.name || user?.email || "U").charAt(0).toUpperCase();
@@ -223,26 +347,19 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
               </button>
               {realmsOpen && (
                 <div className="mt-2 space-y-1">
-                  <Link
-                    href="/realms/create"
-                    onClick={onCloseMobile}
-                    className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground"
-                  >
-                    <Plus className="h-3.5 w-3.5 shrink-0" />
-                    <span>New Realm</span>
-                  </Link>
                   {realmsLoading ? (
                     <p className="px-2.5 text-xs text-muted-foreground">Loading realms...</p>
                   ) : realms.length === 0 ? (
                     <p className="px-2.5 text-xs text-muted-foreground">No realms</p>
                   ) : (
                     realms.map((realm, idx) => {
-                      const realmChats = (realmChatsQueries[idx]?.data ?? []) as Chat[];
+                      const shouldShowRealmChats = isOnRealmChatPage && realm.id === activeRealmId;
+                      const realmChats = shouldShowRealmChats ? ((realmChatsQueries[idx]?.data ?? []) as Chat[]) : [];
                       return (
                         <div key={realm.id} className="group rounded-md">
                           <div className="flex items-center rounded-md hover:bg-sidebar-accent/70">
                             <Link
-                              href={`/realms/${realm.id}/chat`}
+                              href={`/realms/${realm.id}`}
                               onClick={onCloseMobile}
                               className="flex min-w-0 flex-1 items-center gap-2 px-2.5 py-1.5 text-sm text-sidebar-foreground/90"
                             >
@@ -280,56 +397,58 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                          <div className="mt-1 space-y-1 pl-7">
-                            {realmChats.length === 0 ? (
-                              <p className="px-2.5 py-1 text-xs text-muted-foreground">No chats</p>
-                            ) : (
-                              realmChats.map((chat) => (
-                                <div key={chat.id} className="group/chat flex items-center rounded-md hover:bg-sidebar-accent/70">
-                                  <Link
-                                    href={`/realms/${realm.id}/chat/${chat.id}`}
-                                    onClick={onCloseMobile}
-                                    className={cn(
-                                      "min-w-0 flex-1 truncate px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:text-sidebar-foreground",
-                                      pathname?.includes(`/realms/${realm.id}/chat/${chat.id}`) && "text-sidebar-foreground"
-                                    )}
-                                  >
-                                    {chatLabel(chat)}
-                                  </Link>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="mr-1 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-sidebar-accent/70 hover:text-sidebar-foreground group-hover/chat:opacity-100"
-                                      >
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                      <DropdownMenuItem
-                                        onSelect={(e) => {
-                                          e.preventDefault();
-                                          setChatToRename(chat);
-                                          setChatRenameTitle(chat.title?.trim() || "");
-                                        }}
-                                      >
-                                        Rename
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onSelect={(e) => {
-                                          e.preventDefault();
-                                          setChatToDelete(chat);
-                                        }}
-                                      >
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              ))
-                            )}
-                          </div>
+                          {shouldShowRealmChats && (
+                            <div className="mt-1 space-y-1 pl-7">
+                              {realmChats.length === 0 ? (
+                                <p className="px-2.5 py-1 text-xs text-muted-foreground">No chats</p>
+                              ) : (
+                                realmChats.map((chat) => (
+                                  <div key={chat.id} className="group/chat flex items-center rounded-md hover:bg-sidebar-accent/70">
+                                    <Link
+                                      href={`/realms/${realm.id}/chat/${chat.id}`}
+                                      onClick={onCloseMobile}
+                                      className={cn(
+                                        "min-w-0 flex-1 truncate px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:text-sidebar-foreground",
+                                        pathname?.includes(`/realms/${realm.id}/chat/${chat.id}`) && "text-sidebar-foreground"
+                                      )}
+                                    >
+                                      {chatLabel(chat)}
+                                    </Link>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="mr-1 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-sidebar-accent/70 hover:text-sidebar-foreground group-hover/chat:opacity-100"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenuItem
+                                          onSelect={(e) => {
+                                            e.preventDefault();
+                                            setChatToRename(chat);
+                                            setChatRenameTitle(chat.title?.trim() || "");
+                                          }}
+                                        >
+                                          Rename
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onSelect={(e) => {
+                                            e.preventDefault();
+                                            setChatToDelete(chat);
+                                          }}
+                                        >
+                                          Delete
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })
@@ -368,7 +487,8 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
                     <p className="px-2.5 text-xs text-muted-foreground">No folders</p>
                   ) : (
                     folders.map((folder, idx) => {
-                      const folderChats = (folderChatsQueries[idx]?.data ?? []) as Chat[];
+                      const shouldShowFolderChats = isOnFolderChatPage && folder.id === activeFolderId;
+                      const folderChats = shouldShowFolderChats ? ((folderChatsQueries[idx]?.data ?? []) as Chat[]) : [];
                       const folderSlug = toFolderSlug(folder);
                       return (
                         <div key={folder.id} className="group rounded-md">
@@ -411,56 +531,66 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                          <div className="mt-1 space-y-1 pl-7">
-                            {folderChats.length === 0 ? (
-                              <p className="px-2.5 py-1 text-xs text-muted-foreground">No chats</p>
-                            ) : (
-                              folderChats.map((chat) => (
-                                <div key={chat.id} className="group/chat flex items-center rounded-md hover:bg-sidebar-accent/70">
-                                  <Link
-                                    href={`/folders/${folderSlug}/c/${chat.id}`}
-                                    onClick={onCloseMobile}
-                                    className={cn(
-                                      "min-w-0 flex-1 truncate px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:text-sidebar-foreground",
-                                      pathname?.includes(`/c/${chat.id}`) && "text-sidebar-foreground"
-                                    )}
-                                  >
-                                    {chatLabel(chat)}
-                                  </Link>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="mr-1 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-sidebar-accent/70 hover:text-sidebar-foreground group-hover/chat:opacity-100"
-                                      >
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                      <DropdownMenuItem
-                                        onSelect={(e) => {
-                                          e.preventDefault();
-                                          setChatToRename(chat);
-                                          setChatRenameTitle(chat.title?.trim() || "");
-                                        }}
-                                      >
-                                        Rename
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onSelect={(e) => {
-                                          e.preventDefault();
-                                          setChatToDelete(chat);
-                                        }}
-                                      >
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              ))
-                            )}
-                          </div>
+                          {shouldShowFolderChats && (
+                            <div className="mt-1 space-y-1 pl-7">
+                              {folderChats.length === 0 ? (
+                                <p className="px-2.5 py-1 text-xs text-muted-foreground">No chats</p>
+                              ) : (
+                                folderChats.map((chat) => (
+                                  <div key={chat.id} className="group/chat flex items-center rounded-md hover:bg-sidebar-accent/70">
+                                    <Link
+                                      href={`/folders/${folderSlug}/c/${chat.id}`}
+                                      onClick={onCloseMobile}
+                                      className={cn(
+                                        "flex min-w-0 flex-1 items-center gap-2 px-2.5 py-1.5 text-sm text-sidebar-foreground/80 hover:text-sidebar-foreground",
+                                        pathname?.includes(`/c/${chat.id}`) && "text-sidebar-foreground"
+                                      )}
+                                    >
+                                      <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border/70">
+                                        {chat.character?.avatar?.url ? (
+                                          <AvatarImage src={chat.character.avatar.url} alt={chat.character?.name || "Character"} />
+                                        ) : null}
+                                        <AvatarFallback className="bg-sidebar-accent text-[11px]">
+                                          {chatAvatarFallback(chat)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      {chatLabel(chat)}
+                                    </Link>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="mr-1 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-sidebar-accent/70 hover:text-sidebar-foreground group-hover/chat:opacity-100"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenuItem
+                                          onSelect={(e) => {
+                                            e.preventDefault();
+                                            setChatToRename(chat);
+                                            setChatRenameTitle(chat.title?.trim() || "");
+                                          }}
+                                        >
+                                          Rename
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onSelect={(e) => {
+                                            e.preventDefault();
+                                            setChatToDelete(chat);
+                                          }}
+                                        >
+                                          Delete
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })
@@ -495,7 +625,14 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
                             pathname?.includes(`/chat/${chat.id}/`) && "text-sidebar-foreground"
                           )}
                         >
-                          <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                          <Avatar className="h-6 w-6 shrink-0 border border-sidebar-border/70">
+                            {chat.character?.avatar?.url ? (
+                              <AvatarImage src={chat.character.avatar.url} alt={chat.character?.name || "Character"} />
+                            ) : null}
+                            <AvatarFallback className="bg-sidebar-accent text-[11px]">
+                              {chatAvatarFallback(chat)}
+                            </AvatarFallback>
+                          </Avatar>
                           <span className="truncate">{chatLabel(chat)}</span>
                         </Link>
                         <DropdownMenu>
@@ -541,7 +678,7 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sidebar-foreground/90 hover:bg-sidebar-accent/70"
+                  className="flex w-full items-center gap-2 bg-surface-active rounded-md px-2 py-2 text-left text-sidebar-foreground/90 hover:bg-sidebar-accent/70"
                 >
                   <Avatar className="size-8">
                     {user?.avatar ? <AvatarImage src={user.avatar} alt={user.name || user.email} /> : null}
@@ -564,10 +701,30 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/background" onClick={onCloseMobile}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onCloseMobile();
+                      setSettingsOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2"
+                  >
                     <Settings className="h-4 w-4" />
                     Settings
-                  </Link>
+                  </button>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={isLoggingOut}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    if (isLoggingOut) return;
+                    onCloseMobile();
+                    logout();
+                  }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {isLoggingOut ? "Logging out..." : "Logout"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -663,6 +820,129 @@ export default function AppSidebar({ mobileOpen, onCloseMobile }: AppSidebarProp
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        <Dialog
+          open={settingsOpen}
+          onOpenChange={(open) => {
+            setSettingsOpen(open);
+            if (!open) return;
+            const preferred = models.find((m) => m.isDefault)?.id ?? models[0]?.id ?? "";
+            if (preferred) setSelectedModelId(preferred);
+          }}
+        >
+          <DialogContent className="sm:max-w-2xl border-primary/40 bg-background/95 backdrop-blur">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Model Tuning</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Fine-tune response style and length for each model.
+              </p>
+            </DialogHeader>
+
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Model</p>
+                <select
+                  value={selectedModelId}
+                  onChange={(e) => setSelectedModelId(e.target.value)}
+                  className="w-full rounded-md border border-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                >
+                  {models.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedModel && (
+                  <p className="text-xs text-muted-foreground">
+                    {selectedModel.provider.toUpperCase()} {selectedModel.modelName ? `- ${selectedModel.modelName}` : ""}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {MODEL_TUNING_FIELDS.map((field) => {
+                  const value = draftConfig[field.key];
+                  const formattedValue =
+                    field.decimals === 0
+                      ? String(Math.round(value))
+                      : value.toFixed(field.decimals);
+                  return (
+                    <div
+                      key={field.key}
+                      className={cn(
+                        "rounded-xl border border-border/60 bg-muted/25 p-4 space-y-3",
+                        field.key === "presencePenalty" && "sm:col-span-2"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold">{field.label}</p>
+                          <p className="text-xs text-muted-foreground">{field.hint}</p>
+                        </div>
+                        <span className="rounded-md bg-primary/10 px-2 py-1 font-mono text-xs text-primary">
+                          {formattedValue}
+                        </span>
+                      </div>
+
+                      <Slider
+                        min={field.min}
+                        max={field.max}
+                        step={field.step}
+                        value={[value]}
+                        onValueChange={(next) =>
+                          handleConfigChange(
+                            field.key,
+                            { min: field.min, max: field.max },
+                            String(next[0] ?? field.min)
+                          )
+                        }
+                        aria-label={field.label}
+                      />
+
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-[11px] text-muted-foreground">
+                          {field.min} - {field.max}
+                        </p>
+                        <Input
+                          type="number"
+                          min={field.min}
+                          max={field.max}
+                          step={field.step}
+                          value={value}
+                          onChange={(e) =>
+                            handleConfigChange(
+                              field.key,
+                              { min: field.min, max: field.max },
+                              e.target.value
+                            )
+                          }
+                          className="h-8 w-28 text-right font-mono text-xs"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSettingsOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!selectedModelId) {
+                    toast.error("Please select a model");
+                    return;
+                  }
+                  saveModelTuningMutation.mutate({ modelId: selectedModelId, config: draftConfig });
+                }}
+                disabled={saveModelTuningMutation.isPending}
+              >
+                {saveModelTuningMutation.isPending ? "Saving..." : "Save Settings"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog
           open={!!chatToRename}
           onOpenChange={(open) => {

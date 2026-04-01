@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Chats from "@/components/elements/chats";
 import Container from "@/components/elements/container";
@@ -17,11 +17,14 @@ export default function ChatWithCharacterPage() {
 
   const [chatId, setChatId] = useState<string | null>(chatIdFromQuery);
   const [error, setError] = useState<string | null>(null);
+  const createRequestedRef = useRef(false);
 
   const { createChatAsync } = useCreateChat({ showToasts: false });
 
   const createNewChat = useCallback(async () => {
     if (!charId) return;
+    if (createRequestedRef.current) return;
+    createRequestedRef.current = true;
     try {
       const res = await createChatAsync({
         characterId: charId,
@@ -31,9 +34,11 @@ export default function ChatWithCharacterPage() {
       if (newChatId) {
         setChatId(newChatId);
       } else {
+        createRequestedRef.current = false;
         setError("Failed to create chat");
       }
     } catch {
+      createRequestedRef.current = false;
       setError("Failed to create chat");
     }
   }, [charId, createChatAsync]);
@@ -46,10 +51,12 @@ export default function ChatWithCharacterPage() {
 
     // Use chat ID from query param or from URL (when not "new")
     if (chatIdFromQuery) {
+      createRequestedRef.current = true;
       setChatId(chatIdFromQuery);
       return;
     }
     if (chatIdFromUrl && chatIdFromUrl !== "new") {
+      createRequestedRef.current = true;
       setChatId(chatIdFromUrl);
       return;
     }

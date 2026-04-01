@@ -15,13 +15,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "youruniverse-assets-prod.s3.us-east-1.amazonaws.com",
-        pathname: "/**",
-      },
-      // Allow other S3 buckets/regions (e.g. CDN, different regions)
-      {
-        protocol: "https",
-        hostname: "**.amazonaws.com",
+        hostname: "res.cloudinary.com",
         pathname: "/**",
       },
       {

@@ -65,6 +65,10 @@ export function useAIChat(chatIdOrOptions?: string | UseAIChatOptions) {
     prevStatusRef.current = chat.status;
     if (prev === "streaming" && chat.status === "ready" && chatId) {
       queryClient.invalidateQueries({ queryKey: queryKeys.chats.messages(chatId) });
+      // Title can be auto-updated on backend after first meaningful user message.
+      // Refresh chat detail + chat lists so UI reflects new title immediately.
+      queryClient.invalidateQueries({ queryKey: queryKeys.chats.detail(chatId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
     }
   }, [chat.status, chatId, queryClient]);
 

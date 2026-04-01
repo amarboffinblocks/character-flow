@@ -1,6 +1,5 @@
 /**
  * User API Endpoints
- * All user-related API calls
  */
 import { apiClient } from "../shared/client";
 import { ApiResponse } from "../shared/types";
@@ -11,30 +10,13 @@ import type {
   UpdateProfilePictureResponse,
 } from "./types";
 
-/**
- * Get current user profile
- */
-export const getCurrentUser = async (
-  accessToken: string
-): Promise<ApiResponse<GetCurrentUserResponse>> => {
-  const response = await apiClient.get<ApiResponse<GetCurrentUserResponse>>(
-    "/api/v1/user/me",
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
-
+export const getCurrentUser = async (): Promise<ApiResponse<GetCurrentUserResponse>> => {
+  const response = await apiClient.get<ApiResponse<GetCurrentUserResponse>>("/api/v1/user/me");
   return response.data;
 };
 
-/**
- * Update user profile
- */
 export const updateProfile = async (
-  data: UpdateProfileRequest,
-  accessToken: string
+  data: UpdateProfileRequest
 ): Promise<ApiResponse<UpdateProfileResponse>> => {
   const hasMultipartData =
     data.avatar instanceof File || data.backgroundImg instanceof File;
@@ -76,21 +58,14 @@ export const updateProfile = async (
     : data;
 
   const response = await apiClient.put<ApiResponse<UpdateProfileResponse>>("/api/v1/user/profile", payload, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      ...(hasMultipartData ? { "Content-Type": "multipart/form-data" } : {}),
-    },
+    headers: hasMultipartData ? { "Content-Type": "multipart/form-data" } : {},
   });
 
   return response.data;
 };
 
-/**
- * Update profile picture
- */
 export const updateProfilePicture = async (
-  file: File,
-  accessToken: string
+  file: File
 ): Promise<ApiResponse<UpdateProfilePictureResponse>> => {
   const formData = new FormData();
   formData.append("avatar", file);
@@ -99,13 +74,9 @@ export const updateProfilePicture = async (
     "/api/v1/user/profile-picture",
     formData,
     {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "multipart/form-data",
-      },
+      headers: { "Content-Type": "multipart/form-data" },
     }
   );
 
   return response.data;
 };
-

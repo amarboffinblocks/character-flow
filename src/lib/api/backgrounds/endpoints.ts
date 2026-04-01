@@ -16,6 +16,59 @@ import type {
   BulkImportBackgroundsResponse,
 } from "./types";
 
+type RawBackground = Background & {
+  image?: unknown;
+};
+
+const normalizeBackgroundImage = (rawImage: unknown): Background["image"] => {
+  if (rawImage && typeof rawImage === "object" && !Array.isArray(rawImage)) {
+    const imageObj = rawImage as Record<string, unknown>;
+    const directUrl = typeof imageObj.url === "string" ? imageObj.url : null;
+    const secureUrl =
+      typeof imageObj.secure_url === "string" ? imageObj.secure_url : null;
+    return {
+      url: directUrl ?? secureUrl ?? "",
+      width: typeof imageObj.width === "number" ? imageObj.width : undefined,
+      height: typeof imageObj.height === "number" ? imageObj.height : undefined,
+    };
+  }
+
+  if (typeof rawImage === "string") {
+    const trimmed = rawImage.trim();
+    if (!trimmed) {
+      return { url: "" };
+    }
+
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+        const parsedUrl =
+          typeof parsed.url === "string"
+            ? parsed.url
+            : typeof parsed.secure_url === "string"
+              ? parsed.secure_url
+              : "";
+        return {
+          url: parsedUrl,
+          width: typeof parsed.width === "number" ? parsed.width : undefined,
+          height: typeof parsed.height === "number" ? parsed.height : undefined,
+        };
+      } catch {
+        return { url: trimmed };
+      }
+    }
+
+    return { url: trimmed };
+  }
+
+  return { url: "" };
+};
+
+const normalizeBackground = (raw: RawBackground): Background => ({
+  ...raw,
+  image: normalizeBackgroundImage(raw.image),
+});
+
 /**
  * List backgrounds with optional filters
  */
@@ -81,6 +134,12 @@ export const listBackgrounds = async (
     },
   });
 
+  if (response.data?.data?.backgrounds) {
+    response.data.data.backgrounds = response.data.data.backgrounds.map((bg) =>
+      normalizeBackground(bg as RawBackground)
+    );
+  }
+
   return response.data;
 };
 
@@ -103,6 +162,12 @@ export const getBackground = async (
       },
     }
   );
+
+  if (response.data?.data?.background) {
+    response.data.data.background = normalizeBackground(
+      response.data.data.background as RawBackground
+    );
+  }
 
   return response.data;
 };
@@ -144,6 +209,12 @@ export const createBackground = async (
     }
   );
 
+  if (response.data?.data?.background) {
+    response.data.data.background = normalizeBackground(
+      response.data.data.background as RawBackground
+    );
+  }
+
   return response.data;
 };
 
@@ -169,6 +240,12 @@ export const updateBackground = async (
       },
     }
   );
+
+  if (response.data?.data?.background) {
+    response.data.data.background = normalizeBackground(
+      response.data.data.background as RawBackground
+    );
+  }
 
   return response.data;
 };
@@ -217,6 +294,12 @@ export const importBackground = async (
     }
   );
 
+  if (response.data?.data?.background) {
+    response.data.data.background = normalizeBackground(
+      response.data.data.background as RawBackground
+    );
+  }
+
   return response.data;
 };
 
@@ -247,6 +330,12 @@ export const bulkImportBackgrounds = async (
       },
     }
   );
+
+  if (response.data?.data?.backgrounds) {
+    response.data.data.backgrounds = response.data.data.backgrounds.map((bg) =>
+      normalizeBackground(bg as RawBackground)
+    );
+  }
 
   return response.data;
 };

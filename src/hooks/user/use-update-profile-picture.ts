@@ -9,7 +9,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { updateProfilePicture } from "@/lib/api/user";
 import { queryKeys } from "@/lib/api/shared/query-keys";
-import { getAccessToken } from "@/lib/utils/token-storage";
 import type { UpdateProfilePictureResponse } from "@/lib/api/user";
 import type { ApiError } from "@/lib/api/shared/types";
 
@@ -60,12 +59,7 @@ export const useUpdateProfilePicture = (options: UseUpdateProfilePictureOptions 
         throw new Error(validation.error);
       }
 
-      const accessToken = getAccessToken();
-      if (!accessToken) {
-        throw new Error("No access token available");
-      }
-
-      return await updateProfilePicture(file, accessToken);
+      return await updateProfilePicture(file);
     },
 
     retry: false,

@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Menu, Plus } from "lucide-react";
 import {
   DropdownMenu,
@@ -18,8 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { PaginationComponent } from "@/components/elements/pagination-element";
-import FolderCardSkeleton from "@/components/cards-skeletons/folder-card-skeleton";
-import { MasonryGrid } from "@/components/elements/masonry-grid";
+import RealmCardSkeleton from "@/components/cards-skeletons/realm-card-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Container from "@/components/elements/container";
 import Footer from "@/components/layout/footer";
@@ -30,6 +30,7 @@ import ErrorEmptyState from "@/components/elements/error-empty-state";
 import GlobalLoader from "@/components/elements/global-loader";
 import { useListRealms } from "@/hooks/realm";
 import RealmCard from "@/components/cards/realm-card";
+import { NewRealmSlot } from "@/components/cards/new-realm-slot";
 
 const TABS = [
   { label: "All", value: "all" },
@@ -50,6 +51,7 @@ const SORT_OPTIONS = [
 }>;
 
 const RealmsPage = () => {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -177,13 +179,13 @@ const RealmsPage = () => {
   }, [isLoading, data]);
 
   const masonryClass =
-    "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6";
+    "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-4 gap-y-6";
 
   return (
     <Container className="relative flex min-h-[calc(100vh-8rem)] flex-col py-6">
       <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
-      <div className="sticky top-0 z-30 mb-3 bg-background pb-3 pt-2">
+      <div className="sticky top-0 z-30 mb-3 pb-3 pt-2">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Realms</h1>
@@ -301,7 +303,7 @@ const RealmsPage = () => {
 
       <div className="flex min-h-0 flex-1 flex-col">
         <Tabs value={activeTab} onValueChange={onTabChange} className="flex min-h-0 flex-1 flex-col">
-          <div className="sticky top-24 z-20 mb-3 bg-background py-2">
+          <div className="sticky top-24 z-20 mb-3 ">
             <TabsList className="grid h-auto w-full grid-cols-2 gap-2 sm:grid-cols-4">
               {TABS.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} className="whitespace-nowrap">
@@ -315,7 +317,7 @@ const RealmsPage = () => {
             {isLoading && realms.length === 0 ? (
               <div className={`mt-4 grid ${masonryClass}`}>
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <FolderCardSkeleton key={`skeleton-${i}`} />
+                  <RealmCardSkeleton key={`skeleton-${i}`} />
                 ))}
               </div>
             ) : isError ? (
@@ -334,11 +336,12 @@ const RealmsPage = () => {
               />
             ) : (
               <div className="mt-4" style={{ opacity: isLoading ? 0.5 : 1 }}>
-                <MasonryGrid
-                  items={realms}
-                  className={masonryClass}
-                  renderItem={(realm) => <RealmCard folder={realm} />}
-                />
+                <div className={`grid ${masonryClass}`}>
+                  <NewRealmSlot onClick={() => router.push("/realms/create")} />
+                  {realms.map((realm) => (
+                    <RealmCard key={realm.id} folder={realm} />
+                  ))}
+                </div>
               </div>
             )}
           </TabsContent>

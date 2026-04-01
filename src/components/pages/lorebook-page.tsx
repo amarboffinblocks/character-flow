@@ -311,7 +311,7 @@ const LorebookPage = () => {
         <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative py-6">
             <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
-            <div className="sticky top-0 z-30 bg-background pt-2 pb-3 mb-3">
+            <div className="sticky top-0 z-30 pt-2 pb-3 mb-3">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div className="space-y-1">
                         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Lorebooks</h1>
@@ -464,8 +464,8 @@ const LorebookPage = () => {
                     onValueChange={onTabChange}
                     className="flex flex-col min-h-0 flex-1"
                 >
-                    <div className="sticky top-24 z-20 bg-background py-2 mb-3">
-                        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-full border border-border bg-surface-subtle p-1.5 sm:grid-cols-5">
+                    <div className="sticky top-24 z-20 mb-3">
+                        <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-full border border-border bg-surface-subtle  sm:grid-cols-5">
                             {TABS.map((tab) => (
                                 <TabsTrigger
                                     key={tab.value}

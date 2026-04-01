@@ -12,10 +12,12 @@ import { cn } from "@/lib/utils";
 interface GlobalBackgroundProps {
     className?: string;
     showStars?: boolean;
+    position?: "fixed" | "absolute";
 }
 
 export const GlobalBackground: React.FC<GlobalBackgroundProps> = ({
     className,
+    position = "fixed",
 }) => {
     const { background, isLoading } = useActiveBackground();
     const [currentBg, setCurrentBg] = React.useState<string | null>(null);
@@ -35,14 +37,16 @@ export const GlobalBackground: React.FC<GlobalBackgroundProps> = ({
         }
     }, [background?.image?.url]);
 
+    const positionClass = position === "absolute" ? "absolute" : "fixed";
+
     if (isLoading || (!currentBg && !prevBg)) {
-        return <div className="fixed inset-0 pointer-events-none -z-50 bg-black" />;
+        return <div className={`${positionClass} inset-0 pointer-events-none z-0 bg-black`} />;
     }
 
     return (
         <div
             className={cn(
-                "fixed inset-0 pointer-events-none overflow-hidden bg-black -z-50",
+                `${positionClass} inset-0 pointer-events-none overflow-hidden z-0`,
                 className
             )}
         >
@@ -61,17 +65,17 @@ export const GlobalBackground: React.FC<GlobalBackgroundProps> = ({
             {/* Current Background (fading in) */}
             {currentBg && (
                 <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ease-in-out scale-105"
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{
                         backgroundImage: `url(${currentBg})`,
-                        filter: "blur(5px) brightness(1) contrast(1.1)",
+                        filter: "blur(5px) brightness(0.4) contrast(1.1)",
                         opacity: isTransitioning ? (prevBg ? 0 : 1) : 1,
                     }}
                 />
             )}
 
             {/* Overlay gradient to ensure content readability */}
-            <div className="absolute inset-0 bg-black/40" />
+            {/* <div className="absolute inset-0 bg-black/10" /> */}
         </div>
     );
 };

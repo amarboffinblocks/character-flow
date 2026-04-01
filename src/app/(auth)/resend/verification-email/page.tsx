@@ -1,8 +1,5 @@
-import ResendVerificationForm from "@/components/forms/resend-verification-form";
+import { redirect } from "next/navigation";
 
-const ResendVerificationPage = () => {
-  return <ResendVerificationForm />;
-};
-
-export default ResendVerificationPage;
-
+export default function ResendVerificationPage() {
+  redirect("/sign-in");
+}

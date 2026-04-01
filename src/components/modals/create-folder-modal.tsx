@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -97,14 +98,19 @@ export const FolderModal = ({
 
     const content = (
         <DialogContent
-            className="bg-primary/20 backdrop-filter border-2 border-primary transition-transform backdrop-blur-lg hover:border-2 hover:border-primary duration-500 text-white w-fit p-0 overflow-hidden rounded-[24px] shadow-2xl"
+            className="sm:max-w-md rounded-3xl border border-border bg-popover text-foreground p-0 overflow-hidden shadow-2xl"
             onPointerDownOutside={(e) => !isSubmitting && handleOpenChange(false)}
         >
-            <div className="p-6 pt-5 space-y-6">
+            <div className="p-6 space-y-5">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold tracking-tight text-white">
+                    <DialogTitle className="text-center text-xl font-semibold tracking-tight">
                         {title}
                     </DialogTitle>
+                    <DialogDescription className="text-center text-muted-foreground text-sm">
+                        {isCreate
+                            ? "Keep chats and files organized with folders."
+                            : "Update the folder details below."}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -114,27 +120,36 @@ export const FolderModal = ({
                             onChange={(e) => setName(e.target.value)}
                             placeholder={placeholder}
                             disabled={isSubmitting}
-                            className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                            className="h-11 rounded-xl border-border bg-surface-base text-foreground placeholder:text-muted-foreground"
                             autoFocus
                         />
                     </div>
 
-                    <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 pr-6 flex gap-3.5">
+                    <div className="rounded-2xl border border-border bg-surface-subtle p-4 pr-6 flex gap-3.5">
                         <div className="shrink-0 pt-0.5">
-                            <Lightbulb className="h-5 w-5 text-white/40" />
+                            <Lightbulb className="h-5 w-5 text-muted-foreground" />
                         </div>
-                        <p className="text-[14px] text-white/50 leading-snug">
+                        <p className="text-sm text-muted-foreground leading-snug">
                             {isCreate
                                 ? "Folders keep chats, files, and custom instructions in one place. Use them for ongoing work, or just to keep things tidy."
                                 : "Change the folder name. Chats inside will stay in this folder."}
                         </p>
                     </div>
 
-                    <div className="flex justify-end pt-2">
+                    <div className="flex justify-end gap-2 pt-1">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleOpenChange(false)}
+                            disabled={isSubmitting}
+                            className="rounded-full px-5"
+                        >
+                            Cancel
+                        </Button>
                         <Button
                             type="submit"
                             disabled={!name.trim() || isSubmitting}
-                            className="text-white/90 rounded-full px-6 py-2 transition-all duration-200 border-none shadow-none text-sm"
+                            className="rounded-full px-6 text-sm"
                         >
                             {isSubmitting ? "Saving…" : submitLabel}
                         </Button>

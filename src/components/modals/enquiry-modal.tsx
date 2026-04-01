@@ -34,7 +34,7 @@ export default function EnquiryModal({ isOpen, onClose }: EnquiryModalProps) {
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:min-w-[325px]  bg-[#0F111A] rounded-4xl border-white/10 text-white">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold">Contact YourUniverse.AI</DialogTitle>
+                    <DialogTitle className="text-xl font-bold">Contact the Team</DialogTitle>
                     <DialogDescription className="text-gray-400">
                         Interested in creating your own universe? Leave us a message.
                     </DialogDescription>

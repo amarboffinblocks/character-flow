@@ -107,9 +107,9 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
     const formSchema = useMemo(() => {
         if (!isEditMode) return characterSchema;
 
-        // In edit mode, make avatar and backgroundImage optional
+        // In edit mode, make avatar optional
         return characterSchema.map((field) => {
-            if (field.name === "avatar" || field.name === "backgroundImage") {
+            if (field.name === "avatar") {
                 return { ...field, required: false };
             }
             return field;
@@ -140,7 +140,6 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
 
         return {
             avatar: character.avatar?.url || "",
-            backgroundImage: character.backgroundImg?.url || "",
             characterName: character.name || "",
             visiable: character.visibility || "private",
             rating: character.rating || "SFW",
@@ -170,10 +169,6 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
             if (!values.avatar || !(values.avatar instanceof File)) {
                 console.error("Avatar file is required");
 
-            }
-            if (!values.backgroundImage || !(values.backgroundImage instanceof File)) {
-                console.error("Background image file is required");
-                return;
             }
         }
 
@@ -228,13 +223,6 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
                 updateData.avatar = values.avatar;
             }
 
-            // Handle backgroundImage - only include if it's a new File, otherwise keep existing
-            if (values.backgroundImage instanceof File) {
-                updateData.backgroundImage = values.backgroundImage;
-            } else if (typeof values.backgroundImage === "string" && values.backgroundImage !== character?.backgroundImg?.url) {
-                updateData.backgroundImage = values.backgroundImage;
-            }
-
             // Handle personaId - allow null to unlink
             // Handle both array (multi-select) and string (single-select) formats
             const personaValue = Array.isArray(values.persona)
@@ -266,7 +254,6 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
             const createData: CreateCharacterRequest = {
                 ...baseData,
                 avatar: values.avatar instanceof File ? values.avatar : undefined,
-                backgroundImage: values.backgroundImage instanceof File ? values.backgroundImage : undefined,
             };
 
             // Trigger character creation

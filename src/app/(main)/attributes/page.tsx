@@ -17,7 +17,7 @@ const page = () => {
       resourceUsed: "Ollama",
       usedFor: "Universe Creation",
       description:
-        "YourUniverse.AI is incredibly thankful and appreciative of every one who has contributed to Ollama & for creating such an incredible platform. You all are the best.",
+        "We are incredibly thankful to everyone who has contributed to Ollama and made such an incredible platform possible.",
       links: [
         "https://ollama.com/",
         "https://ollama.com/library/llama3/blobs/4fa551d4f938"
@@ -26,9 +26,9 @@ const page = () => {
     {
       resourceUsed: "Atkinson Hyperlegible",
       usedFor:
-        "The Atkinson Hyperlegible font is used as the main font for YourUniverse.AI in an attempt to make the site as legible as possible for the widest possible audience.",
+        "Atkinson Hyperlegible is used as the main font to keep the product legible for the widest possible audience.",
       description:
-        "YourUniverse.AI is very grateful and appreciates the Braille Institute of America, Applied Design Works, Elliott Scott, Megan Eiswerth, Linus Boman, Theodore Petrosky for the creation of the Atkinson Hyperlegible font and allowing all to use it.",
+        "We appreciate the Braille Institute of America, Applied Design Works, Elliott Scott, Megan Eiswerth, Linus Boman, and Theodore Petrosky for creating Atkinson Hyperlegible and making it available for everyone.",
       links: [
         "https://www.brailleinstitute.org/",
         "https://www.brailleinstitute.org/freefont/",

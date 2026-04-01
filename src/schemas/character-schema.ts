@@ -14,18 +14,6 @@ export const characterSchema: FormData[] = [
         rows: "3",
     },
     {
-        name: "backgroundImage",
-        type: "file",
-        required: true,
-        rules: {
-            accept: ["png", "jpg"]
-        },
-        label: "Background",
-        cols: 12,
-        row: 4,
-        rows: "3",
-    },
-    {
         name: "characterName",
         type: "text",
         label: "Character Name",

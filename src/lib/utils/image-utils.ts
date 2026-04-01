@@ -5,7 +5,7 @@
 
 /**
  * Get the full URL for an image path
- * Handles relative paths from the backend and full S3/external URLs
+ * Handles relative paths from the backend and full Cloudinary/external URLs
  */
 export const getImageUrl = (path: string | null | undefined): string => {
     if (!path) return "/logo1.png"; // Fallback image

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { Folder, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Folder, MessageSquare, Sparkles, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import ChatPanel from "@/components/elements/chat-panel";
 import Container from "@/components/elements/container";
 import Footer from "@/components/layout/footer";
@@ -248,7 +248,7 @@ export default function FolderPage() {
                     {chats.map((chat) => (
                       <div
                         key={chat.id}
-                        className="group relative flex flex-col rounded-xl border border-white/10 bg-primary/20 backdrop-blur-sm p-4 hover:bg-primary/30 hover:border-white/20 transition-all duration-200"
+                        className="group relative flex flex-col rounded-xl border border-white/10 bg-surface-base hover:bg-surface-hover duration-500  p-4  "
                       >
                         <Link
                           href={chatListSlug ? `/folders/${chatListSlug}/c/${chat.id}` : "#"}
@@ -289,7 +289,6 @@ export default function FolderPage() {
                                 variant="ghost"
                                 size="icon"
                                 type="button"
-                                className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
                               >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
@@ -412,35 +411,38 @@ export default function FolderPage() {
       </AlertDialog>
 
       <Dialog open={selectCharacterDialogOpen} onOpenChange={setSelectCharacterDialogOpen}>
-        <DialogContent className="bg-primary/20 backdrop-blur-sm border-primary text-white rounded-4xl">
+        <DialogContent className="max-w-[540px] border border-primary/50 text-white  rounded-4xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Select a character</DialogTitle>
-            <DialogDescription className="text-white/80">
+            <DialogTitle className="flex items-center gap-2 text-xl font-semibold tracking-tight text-white">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
+                <Sparkles className="h-4 w-4 text-white/90" />
+              </span>
+              Select a character
+            </DialogTitle>
+            <DialogDescription className="text-base text-white/75">
               Please select a character first, then continue chatting.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-2">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
             <LinkToField
               model="character"
               label="Characters"
               placeholder="Search and select a character..."
-              className="bg-transparent"
+              className="bg-transparent text-white"
               value={dialogCharacterId ? [dialogCharacterId] : []}
               onValueChange={(v) => setDialogCharacterId(v?.[0])}
               multiSelect={false}
               maxCount={1}
             />
           </div>
-          <DialogFooter>
+          <DialogFooter className="mt-1 gap-2 sm:gap-3">
             <Button
-              variant="ghost"
-              className="border-white/20 text-white hover:bg-white/10"
+              variant="outline"
               onClick={() => setSelectCharacterDialogOpen(false)}
             >
               Cancel
             </Button>
             <Button
-              className="bg-primary text-primary-foreground hover:bg-accent-hover"
               onClick={handleConfirmSelectCharacter}
             >
               Continue

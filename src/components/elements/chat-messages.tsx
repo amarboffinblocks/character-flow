@@ -35,7 +35,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "../ui/label";
 import {
     CopyIcon,
-    EyeIcon,
     InfoIcon,
     MoreVerticalIcon,
     RotateCwIcon,
@@ -43,11 +42,9 @@ import {
     MessageSquarePlusIcon,
     GitBranchIcon,
     BanIcon,
-    CalendarIcon,
     UserIcon,
     FileTextIcon,
     StickyNoteIcon,
-    UserCircleIcon,
     PencilIcon,
     Trash2Icon,
     XIcon,
@@ -114,23 +111,28 @@ type BranchState = { branches: string[]; selectedIndex: number };
 
 interface MessageMenuProps {
     messageId: string;
-    content?: string;
     onStartNewChat?: () => void;
-    onStartWorkOnToday?: (messageId: string, content?: string) => void;
-    onBranchChat?: (messageId: string) => void;
     onSaveChat?: () => void;
     onExcludeMessage?: (messageId: string) => void;
-    onInfo?: (messageId: string, content: string) => void;
+    onDeleteMessage?: (messageId: string) => void;
+    canDelete?: boolean;
+    showChatActions?: boolean;
+    onCharacterPreview?: () => void;
+    onShowAuthorNotes?: () => void;
+    onShowCharacterNotes?: () => void;
 }
 
 const MessageMenu = memo(({
     messageId,
-    content,
     onStartNewChat,
-    onStartWorkOnToday,
-    onBranchChat,
     onSaveChat,
     onExcludeMessage,
+    onDeleteMessage,
+    canDelete = false,
+    showChatActions = false,
+    onCharacterPreview,
+    onShowAuthorNotes,
+    onShowCharacterNotes,
 }: MessageMenuProps) => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -141,37 +143,66 @@ const MessageMenu = memo(({
                 <MoreVerticalIcon className="size-3" />
             </MessageAction>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="bg-primary/30 border-primary/50 text-white">
+        <DropdownMenuContent align="start" className="border-border/60 bg-popover/95 text-popover-foreground backdrop-blur-md">
+            {onCharacterPreview && (
+                <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
+                    onClick={onCharacterPreview}
+                >
+                    <UserIcon className="size-3.5" />
+                    Character preview
+                </DropdownMenuItem>
+            )}
+            {onShowAuthorNotes && (
+                <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
+                    onClick={onShowAuthorNotes}
+                >
+                    <FileTextIcon className="size-3.5" />
+                    Author notes
+                </DropdownMenuItem>
+            )}
+            {onShowCharacterNotes && (
+                <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
+                    onClick={onShowCharacterNotes}
+                >
+                    <StickyNoteIcon className="size-3.5" />
+                    Character notes
+                </DropdownMenuItem>
+            )}
+            {showChatActions && (
+                <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => (onStartNewChat ? onStartNewChat() : toast.info("Start new chat"))}
+                >
+                    <MessageSquarePlusIcon className="size-3.5" />
+                    Start new chat
+                </DropdownMenuItem>
+            )}
             <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                onClick={() => (onStartNewChat ? onStartNewChat() : toast.info("Start new chat"))}
-            >
-                <MessageSquarePlusIcon className="size-3.5" />
-                Start new chat
-            </DropdownMenuItem>
-          
-            <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                onClick={() => (onBranchChat ? onBranchChat(messageId) : toast.info("Branch chat"))}
-            >
-                <GitBranchIcon className="size-3.5" />
-                Branch chat
-            </DropdownMenuItem>
-            <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
                 onClick={() => (onSaveChat ? onSaveChat() : toast.info("Save chat"))}
             >
                 <SaveIcon className="size-3.5" />
                 Save chat
             </DropdownMenuItem>
             <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
                 onClick={() => (onExcludeMessage ? onExcludeMessage(messageId) : toast.info("Exclude message from prompts"))}
             >
                 <BanIcon className="size-3.5" />
                 Exclude message from prompts
             </DropdownMenuItem>
-
+            {canDelete && (
+                <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => (onDeleteMessage ? onDeleteMessage(messageId) : toast.info("Delete message"))}
+                >
+                    <Trash2Icon className="size-3.5" />
+                    Delete message
+                </DropdownMenuItem>
+            )}
         </DropdownMenuContent>
     </DropdownMenu>
 ));
@@ -180,77 +211,58 @@ MessageMenu.displayName = "MessageMenu";
 
 interface UserMessageMenuProps {
     messageId: string;
+    onEdit?: () => void;
     onSaveChat?: () => void;
     onExcludeMessage?: (messageId: string) => void;
+    onDeleteMessage?: (messageId: string) => void;
+    canDelete?: boolean;
 }
 
-const UserMessageMenu = memo(({ messageId, onSaveChat, onExcludeMessage }: UserMessageMenuProps) => (
+const UserMessageMenu = memo(({ messageId, onEdit, onSaveChat, onExcludeMessage, onDeleteMessage, canDelete = true }: UserMessageMenuProps) => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <MessageAction aria-label="Menu" tooltip="Menu">
                 <MoreVerticalIcon className="size-3" />
             </MessageAction>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="bg-primary/30 border-primary/50 text-white">
+        <DropdownMenuContent align="start" className="border-border/60 bg-popover/95 text-popover-foreground backdrop-blur-md">
+            {onEdit && (
+                <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
+                    onClick={onEdit}
+                >
+                    <PencilIcon className="size-3.5" />
+                    Edit message
+                </DropdownMenuItem>
+            )}
             <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
                 onClick={() => (onSaveChat ? onSaveChat() : toast.info("Save chat"))}
             >
                 <SaveIcon className="size-3.5" />
                 Save Chat
             </DropdownMenuItem>
             <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                className="flex cursor-pointer items-center gap-2 text-xs hover:bg-accent hover:text-accent-foreground"
                 onClick={() => (onExcludeMessage ? onExcludeMessage(messageId) : toast.info("Exclude message from prompts"))}
             >
                 <BanIcon className="size-3.5" />
                 Exclude Message from Prompts
             </DropdownMenuItem>
+            {canDelete && (
+                <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => (onDeleteMessage ? onDeleteMessage(messageId) : toast.info("Delete message"))}
+                >
+                    <Trash2Icon className="size-3.5" />
+                    Delete message
+                </DropdownMenuItem>
+            )}
         </DropdownMenuContent>
     </DropdownMenu>
 ));
 
 UserMessageMenu.displayName = "UserMessageMenu";
-
-interface UserMessageInfoProps {
-    setActivePreview?: (value: "character" | "persona" | null) => void;
-    onEdit?: () => void;
-}
-
-const UserMessageInfo = memo(({ setActivePreview, onEdit }: UserMessageInfoProps) => (
-    <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-            <MessageAction aria-label="Info" tooltip="Info">
-                <InfoIcon className="size-3" />
-            </MessageAction>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-primary/30 border-primary/50 text-white">
-            <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                onClick={() => onEdit?.()}
-            >
-                <PencilIcon className="size-3.5" />
-                Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                onClick={() => toast.info("Impersonate")}
-            >
-                <UserCircleIcon className="size-3.5" />
-                Impersonate
-            </DropdownMenuItem>
-            <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                onClick={() => setActivePreview?.("persona")}
-            >
-                <UserIcon className="size-3.5" />
-                Persona Preview
-            </DropdownMenuItem>
-        </DropdownMenuContent>
-    </DropdownMenu>
-));
-
-UserMessageInfo.displayName = "UserMessageInfo";
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
     setActivePreview,
@@ -275,8 +287,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     characterName,
     characterAvatar,
 }) => {
-    const [liked, setLiked] = useState<Record<string, boolean>>({});
-    const [disliked, setDisliked] = useState<Record<string, boolean>>({});
     const [notesDialog, setNotesDialog] = useState<"author" | "character" | null>(null);
     const [branchState, setBranchState] = useState<Record<string, BranchState>>({});
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -303,16 +313,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         setEditApiMessageId(null);
         setEditText("");
     }, [editingMessageId, editApiMessageId, editText, onEditMessage]);
-
-    const handleToggleLike = useCallback((id: string) => {
-        setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
-        setDisliked((prev) => ({ ...prev, [id]: false }));
-    }, []);
-
-    const handleToggleDislike = useCallback((id: string) => {
-        setDisliked((prev) => ({ ...prev, [id]: !prev[id] }));
-        setLiked((prev) => ({ ...prev, [id]: false }));
-    }, []);
 
     const branchKey = useCallback(
         (messageIndex: number) => (chatId ? `${chatId}:${messageIndex}` : `local:${messageIndex}`),
@@ -405,7 +405,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             </MessageContent>
                                         ))}
                                     </MessageBranchContent>
-                                    <MessageToolbar className="">
+                                    <MessageToolbar>
                                         {allBranches.length > 1 && (
                                             <MessageBranchSelector from="assistant">
                                                 <MessageBranchPrevious />
@@ -426,92 +426,29 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             >
                                                 <CopyIcon className="size-3" />
                                             </MessageAction>
-                                            
-                                            {!isFirstAssistantMessage && (
+                                            {isLastAssistant && !isFirstAssistantMessage && (
                                                 <MessageAction
-                                                    label="Delete"
-                                                    tooltip="Delete message"
+                                                    label="Regenerate"
+                                                    tooltip="Regenerate response"
                                                     onClick={() => {
-                                                        if (onDeleteMessage) {
-                                                            onDeleteMessage(message.id);
-                                                        } else {
-                                                            toast.info("Delete message");
-                                                        }
+                                                        onReload?.();
                                                     }}
                                                 >
-                                                    <Trash2Icon className="size-3" />
+                                                    <RotateCwIcon className="size-3" />
                                                 </MessageAction>
-                                                
                                             )}
-                                            {isLastAssistant && !isFirstAssistantMessage && (
-                                                <>
-                                                    <MessageAction
-                                                        label="Regenerate"
-                                                        tooltip="Regenerate response"
-                                                        onClick={() => {
-                                                            onReload?.();
-                                                        }}
-                                                    >
-                                                        <RotateCwIcon className="size-3" />
-                                                    </MessageAction>
-                                                    <MessageMenu
-                                                        messageId={message.id}
-                                                        content={displayContent}
-                                                        onStartNewChat={onStartNewChat}
-                                                        onStartWorkOnToday={onStartWorkOnToday}
-                                                        onBranchChat={onBranchChat}
-                                                        onSaveChat={onSaveChat}
-                                                        onExcludeMessage={onExcludeMessage}
-                                                    />
-                                                </>
-                                            )}
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <MessageAction
-                                                        aria-label="Info menu"
-                                                        tooltip="Info"
-                                                    >
-                                                        <InfoIcon className="size-3" />
-                                                    </MessageAction>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-primary/30 border-primary/50 text-white">
-                                                    <DropdownMenuItem
-                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                        onClick={() => setActivePreview?.("character")}
-                                                    >
-                                                        <UserIcon className="size-3.5" />
-                                                        Character preview
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                        onClick={() => setNotesDialog("author")}
-                                                    >
-                                                        <FileTextIcon className="size-3.5" />
-                                                        Author notes
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                        onClick={() => setNotesDialog("character")}
-                                                    >
-                                                        <StickyNoteIcon className="size-3.5" />
-                                                        Character notes
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                        onClick={() => toast.info("Impersonate")}
-                                                    >
-                                                        <UserCircleIcon className="size-3.5" />
-                                                        Impersonate
-                                                    </DropdownMenuItem>
-                                                    {/* <DropdownMenuItem
-                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                        onClick={() => toast.info("Edit")}
-                                                    >
-                                                        <PencilIcon className="size-3.5" />
-                                                        Edit
-                                                    </DropdownMenuItem> */}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <MessageMenu
+                                                messageId={message.id}
+                                                onStartNewChat={onStartNewChat}
+                                                onSaveChat={onSaveChat}
+                                                onExcludeMessage={onExcludeMessage}
+                                                onDeleteMessage={onDeleteMessage}
+                                                canDelete={!isFirstAssistantMessage}
+                                                showChatActions={isLastAssistant && !isFirstAssistantMessage}
+                                                onCharacterPreview={() => setActivePreview?.("character")}
+                                                onShowAuthorNotes={() => setNotesDialog("author")}
+                                                onShowCharacterNotes={() => setNotesDialog("character")}
+                                            />
                                         </MessageActions>
                                     </MessageToolbar>
                                 </MessageBranch>
@@ -613,7 +550,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             ) : (
                                                 <>
                                                     <MessageContent>{combinedText || null}</MessageContent>
-                                                    <MessageToolbar className=" flex items-end justify-end">
+                                                    <MessageToolbar className="flex items-end justify-end">
                                                         <MessageActions className="gap-1">
                                                             <MessageAction
                                                                 label="Copy"
@@ -627,41 +564,24 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                                             >
                                                                 <CopyIcon className="size-3" />
                                                             </MessageAction>
-                                                            <MessageAction
-                                                                label="Delete"
-                                                                tooltip="Delete message"
-                                                                onClick={() => {
-                                                                    if (onDeleteMessage) {
-                                                                        onDeleteMessage(message.id);
-                                                                    } else {
-                                                                        toast.info("Delete message");
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Trash2Icon className="size-3" />
-                                                            </MessageAction>
                                                             {messageIndex === lastUserMessageIndex && (
-                                                                <>
-                                                                    <UserMessageMenu
-                                                                        messageId={message.id}
-                                                                        onSaveChat={onSaveChat}
-                                                                        onExcludeMessage={onExcludeMessage}
-                                                                    />
-                                                                    <UserMessageInfo
-                                                                        setActivePreview={setActivePreview}
-                                                                        onEdit={() => {
-                                                                            const apiMsg = apiMessages[messageIndex];
-                                                                            const realId = apiMsg?.role === "user" && UUID_REGEX.test(apiMsg.id)
-                                                                                ? apiMsg.id
-                                                                                : UUID_REGEX.test(message.id) ? message.id : "";
-                                                                            if (!realId) {
-                                                                                toast.error("Edit is not available yet. Please wait for the message to be saved.");
-                                                                                return;
-                                                                            }
-                                                                            handleStartEdit(message.id, realId, combinedText);
-                                                                        }}
-                                                                    />
-                                                                </>
+                                                                <UserMessageMenu
+                                                                    messageId={message.id}
+                                                                    onSaveChat={onSaveChat}
+                                                                    onExcludeMessage={onExcludeMessage}
+                                                                    onDeleteMessage={onDeleteMessage}
+                                                                    onEdit={() => {
+                                                                        const apiMsg = apiMessages[messageIndex];
+                                                                        const realId = apiMsg?.role === "user" && UUID_REGEX.test(apiMsg.id)
+                                                                            ? apiMsg.id
+                                                                            : UUID_REGEX.test(message.id) ? message.id : "";
+                                                                        if (!realId) {
+                                                                            toast.error("Edit is not available yet. Please wait for the message to be saved.");
+                                                                            return;
+                                                                        }
+                                                                        handleStartEdit(message.id, realId, combinedText);
+                                                                    }}
+                                                                />
                                                             )}
                                                         </MessageActions>
                                                     </MessageToolbar>

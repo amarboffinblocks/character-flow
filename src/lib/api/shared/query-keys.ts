@@ -13,16 +13,10 @@ export const queryKeys = {
    */
   auth: {
     all: ["auth"] as const,
-    register: () => [...queryKeys.auth.all, "register"] as const,
     login: () => [...queryKeys.auth.all, "login"] as const,
-    verify: (token?: string) => [...queryKeys.auth.all, "verify", token] as const,
-    verifyOtp: () => [...queryKeys.auth.all, "verify-otp"] as const,
-    resendOtp: () => [...queryKeys.auth.all, "resend-otp"] as const,
     usernameCheck: (username?: string) => [...queryKeys.auth.all, "username-check", username] as const,
     refresh: () => [...queryKeys.auth.all, "refresh"] as const,
     logout: () => [...queryKeys.auth.all, "logout"] as const,
-    forgotPassword: () => [...queryKeys.auth.all, "forgot-password"] as const,
-    resetPassword: () => [...queryKeys.auth.all, "reset-password"] as const,
     user: () => [...queryKeys.auth.all, "user"] as const,
   },
 

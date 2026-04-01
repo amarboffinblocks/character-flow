@@ -96,7 +96,7 @@ export const personaSchema: FormData[] = [
         name: "details",
         type: "textarea",
         label: "Persona Details",
-        placeholder: "Enter your Persona information here, or in other words, who would you like to be in Your Universe. The Character will use this to know more about you. ",
+        placeholder: "Enter your persona details here. The character will use this information to understand how you want to be represented.",
 
         required: true,
         cols: 12,

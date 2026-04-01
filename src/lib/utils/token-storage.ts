@@ -1,57 +1,42 @@
 /**
- * Token Storage Utilities
- * Centralized token management for authentication
+ * Legacy token helpers — the API uses server-side guest context (no real JWT).
+ * We keep a lightweight client auth flag so login/logout UX still behaves as expected.
  */
+const OPEN_ACCESS = "open-access";
+const AUTH_FLAG_KEY = "yu_open_access_enabled";
 
-const TOKEN_STORAGE_KEY = {
-  ACCESS_TOKEN: "access_token",
-  REFRESH_TOKEN: "refresh_token",
-} as const;
+const isBrowser = () => typeof window !== "undefined";
 
-/**
- * Get access token from storage
- */
-export const getAccessToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem(TOKEN_STORAGE_KEY.ACCESS_TOKEN);
-  }
-  return null;
-};
-
-/**
- * Get refresh token from storage
- */
-export const getRefreshToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem(TOKEN_STORAGE_KEY.REFRESH_TOKEN);
-  }
-  return null;
-};
-
-/**
- * Store tokens in localStorage
- */
-export const storeTokens = (tokens: { accessToken: string; refreshToken: string }): void => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(TOKEN_STORAGE_KEY.ACCESS_TOKEN, tokens.accessToken);
-    localStorage.setItem(TOKEN_STORAGE_KEY.REFRESH_TOKEN, tokens.refreshToken);
+const readAuthFlag = (): boolean => {
+  if (!isBrowser()) return true;
+  try {
+    const value = window.localStorage.getItem(AUTH_FLAG_KEY);
+    if (value === null) return true;
+    return value === "1";
+  } catch {
+    return true;
   }
 };
 
-/**
- * Clear all tokens from storage
- */
+const writeAuthFlag = (enabled: boolean): void => {
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.setItem(AUTH_FLAG_KEY, enabled ? "1" : "0");
+  } catch {
+    // Ignore storage failures; app will keep open-access defaults.
+  }
+};
+
+export const getAccessToken = (): string | null => (readAuthFlag() ? OPEN_ACCESS : null);
+
+export const getRefreshToken = (): string | null => null;
+
+export const storeTokens = (_tokens: { accessToken: string; refreshToken: string }): void => {
+  writeAuthFlag(true);
+};
+
 export const clearTokens = (): void => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(TOKEN_STORAGE_KEY.ACCESS_TOKEN);
-    localStorage.removeItem(TOKEN_STORAGE_KEY.REFRESH_TOKEN);
-  }
+  writeAuthFlag(false);
 };
 
-/**
- * Check if user is authenticated (has access token)
- */
-export const isAuthenticated = (): boolean => {
-  return !!getAccessToken();
-};
-
+export const isAuthenticated = (): boolean => readAuthFlag();

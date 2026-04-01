@@ -1,11 +1,5 @@
-import SignUpForm from '@/components/forms/sign-up-form'
+import { redirect } from "next/navigation";
 
-const page = () => {
-    return (
-        <div className='flex justify-center items-center h-full'>
-            <SignUpForm />
-        </div>
-    )
+export default function SignUpPage() {
+  redirect("/sign-in");
 }
-
-export default page

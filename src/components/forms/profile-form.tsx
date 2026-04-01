@@ -14,7 +14,7 @@ import {
 import { Button } from "../ui/button";
 import DynamicForm from "../elements/form-elements/dynamic-form";
 import { profileSchema } from "@/schemas/profile-schema";
-import { useLogout, useCurrentUser, useUpdateProfile, useForgotPassword, useResendVerification } from "@/hooks";
+import { useLogout, useCurrentUser, useUpdateProfile } from "@/hooks";
 import {
     Dialog,
     DialogContent,
@@ -36,8 +36,6 @@ const ProfileForm: React.FC<Props> = () => {
     const { logout, isLoading: isLoggingOut } = useLogout();
     const { user, isLoading: isUserLoading } = useCurrentUser();
     const { updateProfileAsync, isLoading: isUpdatingProfile } = useUpdateProfile();
-    const { requestResetAsync, isLoading: isSendingReset } = useForgotPassword();
-    const { resendAsync, isLoading: isResendingVerification } = useResendVerification();
     const [isUsernameDialogOpen, setIsUsernameDialogOpen] = React.useState(false);
     const [usernameInput, setUsernameInput] = React.useState("");
     const [usernameAvailable, setUsernameAvailable] = React.useState<boolean | null>(null);
@@ -131,16 +129,6 @@ const ProfileForm: React.FC<Props> = () => {
         setIsUsernameDialogOpen(false);
     };
 
-    const handleResendVerification = async () => {
-        if (!user?.email) return;
-        await resendAsync({ email: user.email });
-    };
-
-    const handlePasswordReset = async () => {
-        if (!user?.email) return;
-        await requestResetAsync({ email: user.email });
-    };
-
     const usernameCooldownRemainingMs = useMemo(() => {
         if (!user?.usernameChangedAt) return 0;
         const elapsedMs = Date.now() - new Date(user.usernameChangedAt).getTime();
@@ -192,25 +180,13 @@ const ProfileForm: React.FC<Props> = () => {
                                     </span>
                                 )}
                             </DropdownMenuItem>
-                            {/* <DropdownMenuItem
-                                onClick={async () => {
-                                    await handleResendVerification();
-                                    toast.info("To update email, use your verified flow after verification mail.");
-                                }}
-                                disabled={isResendingVerification}
-                            >
-                                Change / Update Email <span className="ml-auto text-xs text-muted-foreground">(once every 24 hours)</span>
-                            </DropdownMenuItem> */}
-                            <DropdownMenuItem onClick={handlePasswordReset} disabled={isSendingReset}>
-                                Change / Update Password
-                            </DropdownMenuItem>
                         </DropdownMenuGroup>
 
                         <DropdownMenuSeparator className="bg-primary/50" />
 
                         <DropdownMenuGroup>
                             <DropdownMenuItem>
-                                Bulk Export Your Universe
+                                Bulk Export Workspace
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={(e) => {
                                 e.preventDefault();

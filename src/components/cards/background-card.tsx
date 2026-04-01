@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Background } from "@/lib/api/backgrounds";
 
@@ -53,14 +52,8 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
   ...props
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
-  const imageUrl =
-    typeof background.image === "object" && background.image?.url
-      ? background.image.url
-      : typeof background.image === "string"
-        ? background.image
-        : undefined;
+  const imageUrl = background.image?.url?.trim() || undefined;
 
   const handleCheckboxChange = (checked: boolean) => {
     onSelectChange?.(background.id, checked);
@@ -82,23 +75,16 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
       >
         {/* Image container */}
         <div className="absolute inset-0">
-          {/* Skeleton while loading */}
-          {!imageLoaded && imageUrl && (
-            <Skeleton className="absolute inset-0 rounded-none bg-surface-active" />
-          )}
-
           {/* Background image */}
           {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={displayName}
+            <div
+              role="img"
+              aria-label={displayName}
               className={cn(
-                "absolute inset-0 w-full h-full object-cover transition-transform duration-500",
-                "group-hover:scale-105",
-                !imageLoaded && "opacity-0"
+                "absolute inset-0 z-0 bg-center bg-cover bg-no-repeat transition-transform duration-500",
+                "group-hover:scale-105"
               )}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageLoaded(true)}
+              style={{ backgroundImage: `url("${imageUrl.replace(/"/g, "%22")}")` }}
             />
           ) : (
             <div
@@ -113,7 +99,11 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
 
           {/* Gradient overlay for better contrast */}
           <div
-            className="absolute inset-0 bg-linear-to-t from-surface-overlay via-transparent to-transparent"
+            className="absolute inset-0 z-1 pointer-events-none"
+            style={{
+              backgroundImage:
+                "linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.16) 45%, rgba(0,0,0,0) 100%)",
+            }}
             aria-hidden
           />
         </div>
@@ -169,8 +159,8 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer">
-                  <Download className="w-4 h-4 mr-4 " /> Download
+                <DropdownMenuSubTrigger className="cursor-pointer ">
+                  <Download className="w-4 h-4 mr-4  " /> Download
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent className="bg-popover border border-border p-1.5">
