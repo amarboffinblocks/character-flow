@@ -27,7 +27,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$your$2d$universe$
 ;
 const getBaseURL = ()=>{
     if ("TURBOPACK compile-time truthy", 1) {
-        return ("TURBOPACK compile-time value", "http://localhost:8000") || "http://localhost:8000";
+        return ("TURBOPACK compile-time value", "https://character-flow-backend.vercel.app") || "http://localhost:8000";
     }
     //TURBOPACK unreachable
     ;
@@ -5083,7 +5083,7 @@ async function deleteRealmChatMessage(realmId, chatId, messageId) {
     return response.data;
 }
 function getRealmChatMessagesApiUrl(realmId, chatId) {
-    const base = ("TURBOPACK compile-time value", "http://localhost:8000") || "http://localhost:8000";
+    const base = ("TURBOPACK compile-time value", "https://character-flow-backend.vercel.app") || "http://localhost:8000";
     return `${base}/api/v1/realms/${realmId}/chats/${chatId}/messages`;
 }
 async function regenerateRealmChatMessage(realmId, chatId, messageId) {
@@ -5093,7 +5093,7 @@ async function regenerateRealmChatMessage(realmId, chatId, messageId) {
         Accept: "text/event-stream"
     };
     if (token) headers.Authorization = `Bearer ${token}`;
-    const base = ("TURBOPACK compile-time value", "http://localhost:8000") || "http://localhost:8000";
+    const base = ("TURBOPACK compile-time value", "https://character-flow-backend.vercel.app") || "http://localhost:8000";
     const url = `${base}/api/v1/realms/${realmId}/chats/${chatId}/messages`;
     const res = await fetch(url, {
         method: "POST",
@@ -5372,7 +5372,7 @@ const deleteMessage = async (chatId, messageId)=>{
     });
     return response.data;
 };
-const getApiBaseUrl = ()=>("TURBOPACK compile-time value", "http://localhost:8000") || "http://localhost:8000";
+const getApiBaseUrl = ()=>("TURBOPACK compile-time value", "https://character-flow-backend.vercel.app") || "http://localhost:8000";
 const editMessage = async (chatId, messageId, content)=>{
     const token = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$your$2d$universe$2d$ai$2f$client$2f$src$2f$lib$2f$utils$2f$token$2d$storage$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getAccessToken"])();
     const headers = {
@@ -11505,7 +11505,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$your$2d$universe$
 ;
 ;
 ;
-const getApiBaseUrl = ()=>("TURBOPACK compile-time value", "http://localhost:8000") || "http://localhost:8000";
+const getApiBaseUrl = ()=>("TURBOPACK compile-time value", "https://character-flow-backend.vercel.app") || "http://localhost:8000";
 function authHeaders() {
     const token = (0, __TURBOPACK__imported__module__$5b$project$5d2f$Desktop$2f$your$2d$universe$2d$ai$2f$client$2f$src$2f$lib$2f$utils$2f$token$2d$storage$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getAccessToken"])();
     return token ? {

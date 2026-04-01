@@ -80,6 +80,7 @@ export function Component({
   const displacementScale = animation
     ? mapRange(animation.scale, 1, 100, 20, 100)
     : 0;
+  const turbulenceScale = animation?.scale ?? 0;
   const animationDuration = animation
     ? mapRange(animation.speed, 1, 100, 1000, 50)
     : 1;
@@ -138,12 +139,12 @@ export function Component({
                   result="undulation"
                   numOctaves="2"
                   baseFrequency={`${mapRange(
-                    animation.scale,
+                    turbulenceScale,
                     0,
                     100,
                     0.001,
                     0.0005
-                  )},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`}
+                  )},${mapRange(turbulenceScale, 0, 100, 0.004, 0.002)}`}
                   seed="0"
                   type="turbulence"
                 />

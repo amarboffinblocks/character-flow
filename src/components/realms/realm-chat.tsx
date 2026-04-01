@@ -120,7 +120,7 @@ export default function RealmChat({ realmId, chatId, initialPrompt }: RealmChatP
     if (status !== "ready") return;
 
     hasSentInitialPromptRef.current = true;
-    send({ text: prompt });
+    send({ text: prompt, files: [] });
     router.replace(`/realms/${realmId}/chat/${chatId}`, { scroll: false });
   }, [initialPrompt, messages.length, status, send, router, realmId, chatId]);
 
